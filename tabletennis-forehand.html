@@ -309,7 +309,7 @@ function setup() {
     const size = box.getSize(new THREE.Vector3());
     const s = 1.8 / Math.max(size.x, size.y, size.z);
     fbx.scale.setScalar(s);
-    fbx.rotation.x = -Math.PI / 2;
+    fbx.rotation.x = -Math.PI / 2 + (5 * Math.PI / 180);
     const box2 = new THREE.Box3().setFromObject(fbx);
     const center = box2.getCenter(new THREE.Vector3());
     fbx.position.x -= center.x;
@@ -579,7 +579,7 @@ function setup() {
     const curAngle = getShoulderWorldAngle();
     let delta = 0;
     if (shoulderRefAngle !== null) {
-      delta = (curAngle - shoulderRefAngle) * (180 / Math.PI) + 24;
+      delta = (curAngle - shoulderRefAngle) * (180 / Math.PI) + 65;
       // Normalise to [-180, 180]
       while (delta >  180) delta -= 360;
       while (delta < -180) delta += 360;
