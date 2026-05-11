@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -208,10 +208,14 @@ const loadScript = src => new Promise((res, rej) => {
 });
 
 async function init() {
-  await loadScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js");
-  setup();
+  try {
+    await loadScript("https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/libs/fflate.min.js");
+    await loadScript("https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/FBXLoader.js");
+    await loadScript("https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js");
+    setup();
+  } catch(e) {
+    document.getElementById("loading").querySelector(".loading-text").textContent = "載入失敗: " + e.message;
+  }
 }
 
 function setup() {
