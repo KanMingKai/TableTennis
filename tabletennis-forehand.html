@@ -71,48 +71,50 @@
     .panel { border-left: none; border-top: 1px solid var(--border); }
   }
 
-  /* ============ PiP Detection Module ============ */
-  .topbar-detect-btn { background: none; border: 1px solid rgba(0,245,255,.3); color: rgba(0,245,255,.8); font-size: 11px; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 3px; cursor: pointer; font-family: "Noto Sans TC", sans-serif; transition: all .15s; }
-  .topbar-detect-btn:hover { background: rgba(0,245,255,.08); border-color: rgba(0,245,255,.6); color: #00f5ff; }
-  .topbar-detect-btn.active { background: rgba(0,245,255,.12); border-color: #00f5ff; color: #00f5ff; }
+  /* ============ FAB 模式切換按鈕 ============ */
+  #fab-mode { position: fixed; bottom: 28px; right: 20px; width: 64px; height: 64px; border-radius: 50%; background: var(--red); border: none; color: #fff; cursor: pointer; z-index: 40; box-shadow: 0 4px 20px rgba(230,57,70,.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform .15s, box-shadow .15s; font-family: "Noto Sans TC", sans-serif; -webkit-tap-highlight-color: transparent; }
+  #fab-mode:active { transform: scale(0.91); box-shadow: 0 2px 10px rgba(230,57,70,.3); }
+  #fab-mode .fab-icon { font-size: 22px; line-height: 1; }
+  #fab-mode .fab-label { font-size: 10px; letter-spacing: 1px; line-height: 1; }
+  body.detect-mode #fab-mode { display: none; }
 
-  #pip-window { position: absolute; bottom: 100px; right: 16px; width: 300px; height: 230px; background: #000; border: 1px solid rgba(0,245,255,.3); border-radius: 6px; overflow: hidden; z-index: 20; box-shadow: 0 4px 24px rgba(0,245,255,.1); display: flex; flex-direction: column; }
-  #pip-window.pip-hidden { display: none !important; }
-  .viewport.pip-main #pip-window { position: absolute; inset: 0; width: 100%; height: 100%; border: none; border-radius: 0; box-shadow: none; }
-  .viewport.pip-main #canvas, .viewport.pip-main .corner, .viewport.pip-main #bone-overlay, .viewport.pip-main .timeline-bar, .viewport.pip-main .controls, .viewport.pip-main .loading { display: none !important; }
+  /* ============ 偵測模式 Overlay ============ */
+  #detect-overlay { position: fixed; inset: 0; z-index: 50; background: #000; display: none; flex-direction: column; }
+  body.detect-mode #detect-overlay { display: flex; }
 
-  .pip-header { display: flex; align-items: center; gap: 6px; padding: 5px 7px; background: rgba(0,245,255,.06); border-bottom: 1px solid rgba(0,245,255,.12); flex-shrink: 0; user-select: none; cursor: move; }
-  .pip-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; flex-shrink: 0; }
-  .pip-dot.active { background: #10b981; box-shadow: 0 0 5px #10b981; }
-  .pip-fps-text { font-size: 9px; color: #555; font-family: monospace; }
-  .pip-title-text { font-size: 10px; letter-spacing: 2px; color: rgba(0,245,255,.65); flex: 1; text-align: center; font-family: "Bebas Neue", sans-serif; }
-  .pip-actions { display: flex; align-items: center; gap: 3px; }
-  .pip-btn { background: none; border: 1px solid rgba(0,245,255,.2); color: rgba(0,245,255,.7); width: 22px; height: 22px; border-radius: 3px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all .15s; padding: 0; line-height: 1; }
-  .pip-btn:hover { border-color: rgba(0,245,255,.6); color: #00f5ff; background: rgba(0,245,255,.1); }
-  .pip-btn.pip-rec { border-color: rgba(239,68,68,.35); color: rgba(239,68,68,.75); }
-  .pip-btn.pip-rec:hover { border-color: #ef4444; color: #ef4444; }
-  .pip-btn.pip-rec-active { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.12); animation: pip-recpulse 1s infinite; }
-  @keyframes pip-recpulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)} 50%{box-shadow:0 0 0 4px rgba(239,68,68,0)} }
-  .pip-rec-timer { font-size: 9px; color: #ef4444; font-family: monospace; display: none; min-width: 30px; text-align: center; }
-  .pip-btn.pip-close { border-color: rgba(255,255,255,.12); color: rgba(255,255,255,.4); }
-  .pip-btn.pip-close:hover { border-color: rgba(230,57,70,.5); color: #e63946; background: rgba(230,57,70,.08); }
+  .det-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: linear-gradient(180deg, rgba(0,0,0,.78) 0%, transparent 100%); }
+  .det-btn { background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.22); color: #fff; border-radius: 8px; padding: 0 14px; font-size: 12px; cursor: pointer; font-family: "Noto Sans TC", sans-serif; letter-spacing: 1px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 5px; transition: background .15s; -webkit-tap-highlight-color: transparent; }
+  .det-btn:active { background: rgba(255,255,255,.12); }
+  .det-btn.det-rec-btn { border-color: rgba(239,68,68,.5); color: rgba(239,68,68,.9); }
+  .det-btn.det-rec-active { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,.15); animation: det-recpulse 1s infinite; }
+  @keyframes det-recpulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.5)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
+  .det-rec-timer { font-size: 12px; color: #ef4444; font-family: monospace; display: none; }
+  .det-status { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .det-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+  .det-dot.active { background: #10b981; box-shadow: 0 0 6px #10b981; }
+  .det-fps { font-size: 10px; color: rgba(255,255,255,.4); font-family: monospace; }
 
-  .pip-body { position: relative; flex: 1; overflow: hidden; }
-  #pip-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.55; }
-  #pip-canvas { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); }
-  .pip-cards { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 5; }
-  .pip-card { background: rgba(0,0,0,.78); border: 1px solid rgba(0,245,255,.2); border-radius: 4px; padding: 3px 8px; text-align: center; min-width: 52px; transition: border-color .2s; }
-  .pip-card.good { border-color: rgba(16,185,129,.55); }
-  .pip-card.warn { border-color: rgba(245,158,11,.55); }
-  .pip-card-val { font-size: 13px; font-weight: 700; color: #00f5ff; font-family: monospace; }
-  .pip-card.good .pip-card-val { color: #10b981; }
-  .pip-card.warn .pip-card-val { color: #f59e0b; }
-  .pip-card-lbl { font-size: 9px; color: rgba(255,255,255,.4); letter-spacing: .5px; }
-  .pip-coach { position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-size: 10px; color: rgba(255,255,255,.6); z-index: 5; padding: 0 8px; pointer-events: none; font-family: "Noto Sans TC", sans-serif; }
-  .pip-start-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 10; }
-  .pip-start-btn { background: none; border: 1px solid rgba(0,245,255,.5); color: #00f5ff; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 12px; letter-spacing: 1.5px; font-family: "Noto Sans TC", sans-serif; transition: all .15s; }
-  .pip-start-btn:hover { background: rgba(0,245,255,.1); border-color: #00f5ff; }
-  .pip-loading-msg { font-size: 10px; color: rgba(0,245,255,.6); letter-spacing: 1px; font-family: monospace; text-align: center; padding: 0 16px; }
+  #det-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.55; }
+  #det-canvas { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); }
+
+  .det-pip-3d { position: absolute; bottom: 80px; left: 12px; width: 110px; height: 82px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,.18); background: #000; z-index: 5; box-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  #pip-3d-canvas { width: 100%; height: 100%; display: block; }
+
+  .det-bottom { position: absolute; bottom: 0; left: 0; right: 0; z-index: 5; background: linear-gradient(0deg, rgba(0,0,0,.85) 0%, transparent 100%); padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .det-cards { display: flex; gap: 10px; justify-content: center; }
+  .det-card { background: rgba(0,0,0,.62); border: 1px solid rgba(0,245,255,.25); border-radius: 8px; padding: 7px 16px; text-align: center; min-width: 74px; transition: border-color .2s; }
+  .det-card.good { border-color: rgba(16,185,129,.6); }
+  .det-card.warn { border-color: rgba(245,158,11,.6); }
+  .det-card-val { font-size: 20px; font-weight: 700; color: #00f5ff; font-family: monospace; line-height: 1.2; }
+  .det-card.good .det-card-val { color: #10b981; }
+  .det-card.warn .det-card-val { color: #f59e0b; }
+  .det-card-lbl { font-size: 10px; color: rgba(255,255,255,.45); letter-spacing: .5px; margin-top: 1px; }
+  .det-coach { text-align: center; font-size: 12px; color: rgba(255,255,255,.7); font-family: "Noto Sans TC", sans-serif; line-height: 1.6; min-height: 20px; }
+
+  .det-start-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.93); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; z-index: 10; }
+  .det-start-btn { background: none; border: 1px solid rgba(0,245,255,.5); color: #00f5ff; padding: 16px 36px; border-radius: 8px; cursor: pointer; font-size: 15px; letter-spacing: 2px; font-family: "Noto Sans TC", sans-serif; min-height: 56px; transition: all .15s; -webkit-tap-highlight-color: transparent; }
+  .det-start-btn:active { background: rgba(0,245,255,.1); }
+  .det-loading-msg { font-size: 12px; color: rgba(0,245,255,.6); font-family: monospace; text-align: center; padding: 0 24px; line-height: 1.6; }
 
   .pip-dl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
   .pip-dl-box { background: #111; border: 1px solid rgba(0,245,255,.2); border-radius: 8px; padding: 20px; width: min(420px, 92vw); max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
@@ -134,7 +136,6 @@
     <div class="divider"></div>
     <div class="topbar-subtitle">動作分析系統</div>
     <div class="topbar-badge">正手攻球</div>
-    <button id="btn-detect" class="topbar-detect-btn">即時偵測</button>
   </header>
   <div class="viewport" id="viewport">
     <canvas id="canvas"></canvas>
@@ -190,36 +191,6 @@
         <button class="speed-btn" data-speed="0.25">0.25x</button>
         <button class="speed-btn active" data-speed="0.5">0.5x</button>
         <button class="speed-btn" data-speed="1">1x</button>
-      </div>
-    </div>
-
-    <!-- PiP Detection Window -->
-    <div id="pip-window" class="pip-hidden">
-      <div class="pip-header" id="pip-drag-handle">
-        <span id="pip-status-dot" class="pip-dot"></span>
-        <span id="pip-fps" class="pip-fps-text">-- FPS</span>
-        <span class="pip-title-text">即時偵測</span>
-        <div class="pip-actions">
-          <button id="pip-swap-btn" class="pip-btn" title="切換主/副畫面">⇄</button>
-          <button id="pip-cam-btn" class="pip-btn" title="切換攝像頭">⟳</button>
-          <button id="pip-rec-btn" class="pip-btn pip-rec" title="錄影">●</button>
-          <span id="pip-rec-timer" class="pip-rec-timer">00:00</span>
-          <button id="pip-close-btn" class="pip-btn pip-close" title="關閉">✕</button>
-        </div>
-      </div>
-      <div class="pip-body">
-        <video id="pip-video" autoplay playsinline muted></video>
-        <canvas id="pip-canvas"></canvas>
-        <div id="pip-cards" class="pip-cards">
-          <div class="pip-card" id="pip-card-elbow"><div class="pip-card-val" id="pip-val-elbow">--°</div><div class="pip-card-lbl">手肘</div></div>
-          <div class="pip-card" id="pip-card-shoulder"><div class="pip-card-val" id="pip-val-shoulder">--°</div><div class="pip-card-lbl">肩膀</div></div>
-          <div class="pip-card" id="pip-card-knee"><div class="pip-card-val" id="pip-val-knee">--°</div><div class="pip-card-lbl">膝蓋</div></div>
-        </div>
-        <div id="pip-coach" class="pip-coach"></div>
-        <div id="pip-start-overlay" class="pip-start-overlay">
-          <button id="pip-start-btn" class="pip-start-btn">開啟攝像頭</button>
-          <div id="pip-loading-msg" class="pip-loading-msg" style="display:none"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -304,7 +275,7 @@ function setup() {
   const canvas = document.getElementById("canvas");
   const viewport = document.getElementById("viewport");
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -372,6 +343,14 @@ function setup() {
     controls.update();
     renderer.render(scene, camera);
     if (window._overlayUpdate) window._overlayUpdate();
+    if (document.body.classList.contains('detect-mode')) {
+      const pip3d = document.getElementById('pip-3d-canvas');
+      if (pip3d && pip3d.offsetWidth > 0) {
+        const ctx3 = pip3d.getContext('2d');
+        pip3d.width = pip3d.offsetWidth; pip3d.height = pip3d.offsetHeight;
+        ctx3.drawImage(renderer.domElement, 0, 0, pip3d.width, pip3d.height);
+      }
+    }
     if (currentAction && currentAction.getClip()) {
       const dur = currentAction.getClip().duration;
       const t = currentAction.time % dur;
@@ -874,142 +853,165 @@ function setup() {
 init().catch(console.error);
 </script>
 
-<!-- Hidden canvas for video recording -->
-<canvas id="pip-rec-canvas" style="position:fixed;top:-9999px;left:-9999px;"></canvas>
+<!-- FAB 模式切換 -->
+<button id="fab-mode">
+  <span class="fab-icon">📷</span>
+  <span class="fab-label">偵測</span>
+</button>
 
-<!-- Download overlay -->
-<div id="pip-dl-overlay" class="pip-dl-overlay" style="display:none">
+<!-- 偵測模式 Overlay -->
+<div id="detect-overlay">
+  <div class="det-topbar">
+    <button id="btn-back" class="det-btn">← 返回</button>
+    <button id="det-rec-btn" class="det-btn det-rec-btn">● 錄影</button>
+    <span id="det-rec-timer" class="det-rec-timer">00:00</span>
+    <div class="det-status">
+      <span id="det-status-dot" class="det-dot"></span>
+      <span id="det-fps" class="det-fps">-- FPS</span>
+      <button id="det-cam-btn" class="det-btn">⟳</button>
+    </div>
+  </div>
+  <video id="det-video" autoplay playsinline muted></video>
+  <canvas id="det-canvas"></canvas>
+  <div class="det-pip-3d"><canvas id="pip-3d-canvas"></canvas></div>
+  <div class="det-bottom">
+    <div class="det-cards">
+      <div class="det-card" id="det-card-elbow"><div class="det-card-val" id="det-val-elbow">--°</div><div class="det-card-lbl">手肘</div></div>
+      <div class="det-card" id="det-card-shoulder"><div class="det-card-val" id="det-val-shoulder">--°</div><div class="det-card-lbl">肩膀</div></div>
+      <div class="det-card" id="det-card-knee"><div class="det-card-val" id="det-val-knee">--°</div><div class="det-card-lbl">膝蓋</div></div>
+    </div>
+    <div id="det-coach" class="det-coach">等待偵測姿勢...</div>
+  </div>
+  <div id="det-start-overlay" class="det-start-overlay">
+    <button id="det-start-btn" class="det-start-btn">開啟攝像頭</button>
+    <div id="det-loading-msg" class="det-loading-msg" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 錄影合成用 canvas -->
+<canvas id="det-rec-canvas" style="position:fixed;top:-9999px;left:-9999px;"></canvas>
+
+<!-- 下載 overlay -->
+<div id="det-dl-overlay" class="pip-dl-overlay" style="display:none">
   <div class="pip-dl-box">
     <div class="pip-dl-title">錄影完成</div>
-    <div id="pip-dl-size" class="pip-dl-size"></div>
-    <video id="pip-dl-preview" controls style="width:100%;max-height:180px;margin:4px 0;border-radius:4px;background:#000;"></video>
+    <div id="det-dl-size" class="pip-dl-size"></div>
+    <video id="det-dl-preview" controls style="width:100%;max-height:180px;margin:4px 0;border-radius:4px;background:#000;"></video>
     <div class="pip-dl-btns">
-      <a id="pip-dl-link" class="pip-dl-btn pip-dl-primary">下載影片</a>
-      <a id="pip-dl-csv" class="pip-dl-btn">CSV (3 關節)</a>
-      <a id="pip-dl-full-csv" class="pip-dl-btn" style="display:none">CSV (15 關節)</a>
-      <a id="pip-dl-bvh" class="pip-dl-btn">BVH 動畫</a>
+      <a id="det-dl-link" class="pip-dl-btn pip-dl-primary">下載影片</a>
+      <a id="det-dl-csv" class="pip-dl-btn">CSV (3 關節)</a>
+      <a id="det-dl-full-csv" class="pip-dl-btn" style="display:none">CSV (15 關節)</a>
+      <a id="det-dl-bvh" class="pip-dl-btn">BVH 動畫</a>
     </div>
-    <div id="pip-dl-hint" class="pip-dl-hint" style="display:none"></div>
-    <div id="pip-dl-bvh-hint" class="pip-dl-hint" style="display:none"></div>
-    <button id="pip-dl-close-btn" class="pip-dl-close">關閉</button>
+    <div id="det-dl-bvh-hint" class="pip-dl-hint" style="display:none"></div>
+    <button id="det-dl-close-btn" class="pip-dl-close">關閉</button>
   </div>
 </div>
 
 <script>
 (function () {
+  // ---- mode switch ----
+  let detStarted = false;
+
+  document.getElementById('fab-mode').addEventListener('click', () => {
+    document.body.classList.add('detect-mode');
+    if (!detStarted) startDet();
+  });
+
+  document.getElementById('btn-back').addEventListener('click', () => {
+    document.body.classList.remove('detect-mode');
+  });
+
   // ---- state ----
-  let mpPose = null, mpCam = null, pipStarted = false;
-  let pipUseFront = true;
-  let pipLastFps = Date.now(), pipFrames = 0;
-  let pipRecorder = null, pipChunks = [], pipIsRec = false;
-  let pipRecInterval = null, pipRecStart = 0;
-  let pipLog = [], pipFpsEst = 30;
+  let mpPose = null, mpCam = null;
+  let detUseFront = true;
+  let detLastFps = Date.now(), detFrames = 0;
+  let detRecorder = null, detChunks = [], detIsRec = false;
+  let detRecInterval = null, detRecStart = 0;
+  let detLog = [], detFpsEst = 30;
 
-  const pipWin    = document.getElementById('pip-window');
-  const pipVideo  = document.getElementById('pip-video');
-  const pipCanvas = document.getElementById('pip-canvas');
-  const pipRecCvs = document.getElementById('pip-rec-canvas');
-  const vp        = document.getElementById('viewport');
-
-  // ---- open / close ----
-  document.getElementById('btn-detect').addEventListener('click', () => {
-    pipWin.classList.remove('pip-hidden');
-    document.getElementById('btn-detect').classList.add('active');
-    if (!pipStarted) startPip();
-  });
-
-  document.getElementById('pip-close-btn').addEventListener('click', () => {
-    pipWin.classList.add('pip-hidden');
-    vp.classList.remove('pip-main');
-    document.getElementById('btn-detect').classList.remove('active');
-    if (mpCam) { try { mpCam.stop(); } catch(e){} mpCam = null; }
-    if (pipVideo.srcObject) { pipVideo.srcObject.getTracks().forEach(t => t.stop()); pipVideo.srcObject = null; }
-    pipStarted = false;
-  });
-
-  // ---- swap main ↔ pip ----
-  document.getElementById('pip-swap-btn').addEventListener('click', () => {
-    vp.classList.toggle('pip-main');
-  });
+  const detVideo  = document.getElementById('det-video');
+  const detCanvas = document.getElementById('det-canvas');
+  const detRecCvs = document.getElementById('det-rec-canvas');
 
   // ---- switch camera ----
-  document.getElementById('pip-cam-btn').addEventListener('click', async () => {
-    pipUseFront = !pipUseFront;
-    if (pipVideo.srcObject) pipVideo.srcObject.getTracks().forEach(t => t.stop());
+  document.getElementById('det-cam-btn').addEventListener('click', async () => {
+    detUseFront = !detUseFront;
+    if (detVideo.srcObject) detVideo.srcObject.getTracks().forEach(t => t.stop());
     try {
-      pipVideo.srcObject = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: pipUseFront ? 'user' : 'environment' }, audio: false
+      detVideo.srcObject = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: detUseFront ? 'user' : 'environment' }, audio: false
       });
     } catch(e) { console.error(e); }
   });
 
   // ---- recording ----
-  document.getElementById('pip-rec-btn').addEventListener('click', () => pipIsRec ? stopRec() : startRec());
+  document.getElementById('det-rec-btn').addEventListener('click', () => detIsRec ? stopDetRec() : startDetRec());
 
-  function startRec() {
-    pipRecCvs.width  = pipCanvas.offsetWidth  || 400;
-    pipRecCvs.height = pipCanvas.offsetHeight || 300;
-    pipChunks = []; pipLog = [];
+  function startDetRec() {
+    detRecCvs.width  = detCanvas.offsetWidth  || 400;
+    detRecCvs.height = detCanvas.offsetHeight || 300;
+    detChunks = []; detLog = [];
     const types = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
     const mime  = types.find(t => MediaRecorder.isTypeSupported(t));
     if (!mime) { alert('瀏覽器不支援錄影，請使用 Chrome'); return; }
-    try { pipRecorder = new MediaRecorder(pipRecCvs.captureStream(30), { mimeType: mime }); }
+    try { detRecorder = new MediaRecorder(detRecCvs.captureStream(30), { mimeType: mime }); }
     catch(e) { alert('錄製失敗: ' + e.message); return; }
-    pipRecorder.ondataavailable = e => { if (e.data.size > 0) pipChunks.push(e.data); };
-    pipRecorder.onstop = onRecStop;
-    pipRecorder.start(1000);
-    pipIsRec = true; pipRecStart = Date.now();
-    document.getElementById('pip-rec-btn').classList.add('pip-rec-active');
-    const timerEl = document.getElementById('pip-rec-timer');
+    detRecorder.ondataavailable = e => { if (e.data.size > 0) detChunks.push(e.data); };
+    detRecorder.onstop = onDetRecStop;
+    detRecorder.start(1000);
+    detIsRec = true; detRecStart = Date.now();
+    document.getElementById('det-rec-btn').classList.add('rec-active');
+    const timerEl = document.getElementById('det-rec-timer');
     timerEl.style.display = 'inline';
-    pipRecInterval = setInterval(() => {
-      const s = Math.floor((Date.now() - pipRecStart) / 1000);
+    detRecInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - detRecStart) / 1000);
       timerEl.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
     }, 1000);
   }
 
-  function stopRec() {
-    if (pipRecorder && pipRecorder.state !== 'inactive') pipRecorder.stop();
-    if (pipLog.length > 1) {
-      const dur = parseFloat(pipLog[pipLog.length-1].t) - parseFloat(pipLog[0].t);
-      if (dur > 0) pipFpsEst = Math.round(pipLog.length / dur);
+  function stopDetRec() {
+    if (detRecorder && detRecorder.state !== 'inactive') detRecorder.stop();
+    if (detLog.length > 1) {
+      const dur = parseFloat(detLog[detLog.length-1].t) - parseFloat(detLog[0].t);
+      if (dur > 0) detFpsEst = Math.round(detLog.length / dur);
     }
-    pipIsRec = false;
-    clearInterval(pipRecInterval);
-    document.getElementById('pip-rec-btn').classList.remove('pip-rec-active');
-    document.getElementById('pip-rec-timer').style.display = 'none';
+    detIsRec = false;
+    clearInterval(detRecInterval);
+    document.getElementById('det-rec-btn').classList.remove('rec-active');
+    document.getElementById('det-rec-timer').style.display = 'none';
   }
 
-  function onRecStop() {
-    const mime = pipRecorder.mimeType;
+  function onDetRecStop() {
+    const mime = detRecorder.mimeType;
     const ext  = mime.includes('mp4') ? 'mp4' : 'webm';
-    const blob = new Blob(pipChunks, { type: mime });
+    const blob = new Blob(detChunks, { type: mime });
     const url  = URL.createObjectURL(blob);
-    document.getElementById('pip-dl-size').textContent = (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
-    const preview = document.getElementById('pip-dl-preview');
-    const link    = document.getElementById('pip-dl-link');
+    document.getElementById('det-dl-size').textContent = (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
+    const preview = document.getElementById('det-dl-preview');
+    const link    = document.getElementById('det-dl-link');
     preview.src = url; link.href = url;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) { link.target = '_blank'; link.textContent = '在新分頁開啟影片'; }
     else        { link.target = ''; link.download = 'pose-' + Date.now() + '.' + ext; link.textContent = '下載影片'; }
 
     const c3 = ['﻿時間(秒),手肘角度,肩膀抬高,膝蓋彎曲'];
-    pipLog.forEach(r => c3.push(r.t + ',' + r.elbow + ',' + r.shoulder + ',' + r.knee));
-    const csv3 = document.getElementById('pip-dl-csv');
+    detLog.forEach(r => c3.push(r.t + ',' + r.elbow + ',' + r.shoulder + ',' + r.knee));
+    const csv3 = document.getElementById('det-dl-csv');
     csv3.href = URL.createObjectURL(new Blob([c3.join('\n')], { type:'text/csv;charset=utf-8;' }));
     csv3.download = 'pose-3joint-' + Date.now() + '.csv';
 
-    const fullCsv = buildFullCSVPip(pipLog);
-    const fcLink  = document.getElementById('pip-dl-full-csv');
+    const fullCsv = buildFullCSVDet(detLog);
+    const fcLink  = document.getElementById('det-dl-full-csv');
     if (fullCsv) {
       fcLink.href = URL.createObjectURL(new Blob([fullCsv], { type:'text/csv;charset=utf-8;' }));
       fcLink.download = 'pose-15joint-' + Date.now() + '.csv';
       fcLink.style.display = 'inline-block';
     } else { fcLink.style.display = 'none'; }
 
-    const bvhText = genBVHPip(pipLog, pipFpsEst);
-    const bvhLink = document.getElementById('pip-dl-bvh');
-    const bvhHint = document.getElementById('pip-dl-bvh-hint');
+    const bvhText = genBVHDet(detLog, detFpsEst);
+    const bvhLink = document.getElementById('det-dl-bvh');
+    const bvhHint = document.getElementById('det-dl-bvh-hint');
     if (bvhText) {
       bvhLink.href = URL.createObjectURL(new Blob([bvhText], { type:'text/plain' }));
       if (isIOS) { bvhLink.target = '_blank'; bvhLink.textContent = '開啟 BVH'; bvhHint.textContent = 'iOS 請長按連結儲存'; bvhHint.style.display = 'block'; }
@@ -1020,26 +1022,26 @@ init().catch(console.error);
       bvhLink.textContent = 'BVH（需要 3D 資料）';
       bvhHint.textContent = '3D 世界座標不可用，請確認 MediaPipe 版本'; bvhHint.style.display = 'block';
     }
-    document.getElementById('pip-dl-overlay').style.display = 'flex';
+    document.getElementById('det-dl-overlay').style.display = 'flex';
   }
 
-  document.getElementById('pip-dl-close-btn').addEventListener('click', () => {
-    ['pip-dl-link','pip-dl-csv','pip-dl-full-csv','pip-dl-bvh'].forEach(id => {
+  document.getElementById('det-dl-close-btn').addEventListener('click', () => {
+    ['det-dl-link','det-dl-csv','det-dl-full-csv','det-dl-bvh'].forEach(id => {
       const el = document.getElementById(id);
       if (el && el.href && el.href.startsWith('blob:')) URL.revokeObjectURL(el.href);
     });
-    const prev = document.getElementById('pip-dl-preview');
+    const prev = document.getElementById('det-dl-preview');
     if (prev.src && prev.src.startsWith('blob:')) { URL.revokeObjectURL(prev.src); prev.src = ''; }
-    document.getElementById('pip-dl-overlay').style.display = 'none';
+    document.getElementById('det-dl-overlay').style.display = 'none';
   });
 
   // ---- start detection ----
-  document.getElementById('pip-start-btn').addEventListener('click', startPip);
+  document.getElementById('det-start-btn').addEventListener('click', startDet);
 
-  async function startPip() {
-    const overlay = document.getElementById('pip-start-overlay');
-    const btn     = document.getElementById('pip-start-btn');
-    const msg     = document.getElementById('pip-loading-msg');
+  async function startDet() {
+    const overlay = document.getElementById('det-start-overlay');
+    const btn     = document.getElementById('det-start-btn');
+    const msg     = document.getElementById('det-loading-msg');
     btn.style.display = 'none';
     msg.style.display = 'block';
     msg.textContent   = '載入 AI 模型中...';
@@ -1051,70 +1053,49 @@ init().catch(console.error);
 
     mpPose = new Pose({ locateFile: f => 'https://cdn.jsdelivr.net/npm/@mediapipe/pose/' + f });
     mpPose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-    mpPose.onResults(onPipResults);
+    mpPose.onResults(onDetResults);
     msg.textContent = '請求攝像頭權限...';
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: pipUseFront ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: detUseFront ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       });
-      pipVideo.srcObject = stream;
-      mpCam = new Camera(pipVideo, {
-        onFrame: async () => { await mpPose.send({ image: pipVideo }); },
+      detVideo.srcObject = stream;
+      mpCam = new Camera(detVideo, {
+        onFrame: async () => { await mpPose.send({ image: detVideo }); },
         width: 1280, height: 720
       });
       mpCam.start();
       overlay.style.display = 'none';
-      pipStarted = true;
+      detStarted = true;
     } catch(e) { msg.textContent = '攝像頭開啟失敗: ' + e.message; btn.style.display = 'block'; }
   }
 
-  // ---- drag ----
-  (function () {
-    const handle = document.getElementById('pip-drag-handle');
-    let drag = false, ox = 0, oy = 0;
-    handle.addEventListener('mousedown', e => {
-      if (vp.classList.contains('pip-main')) return;
-      drag = true;
-      const rect = pipWin.getBoundingClientRect();
-      pipWin.style.right = 'auto'; pipWin.style.bottom = 'auto';
-      pipWin.style.left = rect.left + 'px'; pipWin.style.top = rect.top + 'px';
-      ox = e.clientX - rect.left; oy = e.clientY - rect.top;
-      e.preventDefault();
-    });
-    document.addEventListener('mousemove', e => {
-      if (!drag) return;
-      pipWin.style.left = (e.clientX - ox) + 'px';
-      pipWin.style.top  = (e.clientY - oy) + 'px';
-    });
-    document.addEventListener('mouseup', () => { drag = false; });
-  })();
-
   // ---- pose results ----
-  function onPipResults(results) {
-    const ctx = pipCanvas.getContext('2d');
-    pipCanvas.width  = pipCanvas.offsetWidth;
-    pipCanvas.height = pipCanvas.offsetHeight;
-    ctx.clearRect(0, 0, pipCanvas.width, pipCanvas.height);
+  function onDetResults(results) {
+    const ctx = detCanvas.getContext('2d');
+    detCanvas.width  = detCanvas.offsetWidth;
+    detCanvas.height = detCanvas.offsetHeight;
+    ctx.clearRect(0, 0, detCanvas.width, detCanvas.height);
 
-    pipFrames++;
+    detFrames++;
     const now = Date.now();
-    if (now - pipLastFps > 1000) {
-      document.getElementById('pip-fps').textContent = pipFrames + ' FPS';
-      pipFrames = 0; pipLastFps = now;
+    if (now - detLastFps > 1000) {
+      document.getElementById('det-fps').textContent = detFrames + ' FPS';
+      detFrames = 0; detLastFps = now;
     }
 
     if (!results.poseLandmarks) {
-      document.getElementById('pip-status-dot').className = 'pip-dot';
-      document.getElementById('pip-coach').textContent = '等待偵測到人物...';
-      if (pipIsRec) composePip();
+      document.getElementById('det-status-dot').style.background = '#444';
+      document.getElementById('det-coach').textContent = '等待偵測到人物...';
+      if (detIsRec) composeDet();
       return;
     }
 
-    document.getElementById('pip-status-dot').className = 'pip-dot active';
+    document.getElementById('det-status-dot').style.background = '#10b981';
     const lm = results.poseLandmarks;
-    const W = pipCanvas.width, H = pipCanvas.height;
+    const W = detCanvas.width, H = detCanvas.height;
     const pt = i => ({ x: lm[i].x * W, y: lm[i].y * H, v: lm[i].visibility });
 
     const BONES = [[11,12],[11,23],[12,24],[23,24],[12,14],[14,16],[16,18],[16,20],[11,13],[13,15],[15,17],[15,19],[24,26],[26,28],[28,30],[28,32],[23,25],[25,27],[27,29],[27,31]];
@@ -1141,25 +1122,25 @@ init().catch(console.error);
     ctx.shadowBlur = 0;
 
     let ea = 0, sa = 0, ka = 0;
-    if (lm[12].visibility > 0.5 && lm[14].visibility > 0.5 && lm[16].visibility > 0.5) ea = pipAngle(pt(12), pt(14), pt(16));
-    if (lm[24].visibility > 0.5 && lm[12].visibility > 0.5 && lm[14].visibility > 0.5) sa = pipAngle(pt(24), pt(12), pt(14));
-    if (lm[24].visibility > 0.5 && lm[26].visibility > 0.5 && lm[28].visibility > 0.5) ka = pipAngle(pt(24), pt(26), pt(28));
+    if (lm[12].visibility > 0.5 && lm[14].visibility > 0.5 && lm[16].visibility > 0.5) ea = detAngle(pt(12), pt(14), pt(16));
+    if (lm[24].visibility > 0.5 && lm[12].visibility > 0.5 && lm[14].visibility > 0.5) sa = detAngle(pt(24), pt(12), pt(14));
+    if (lm[24].visibility > 0.5 && lm[26].visibility > 0.5 && lm[28].visibility > 0.5) ka = detAngle(pt(24), pt(26), pt(28));
 
-    if (ea > 0 && lm[14].visibility > 0.5) drawAng(ctx, pt(14), ea, ea >= 80 && ea <= 100);
-    if (ka > 0 && lm[26].visibility > 0.5) drawAng(ctx, pt(26), ka, ka >= 130 && ka <= 160);
+    if (ea > 0 && lm[14].visibility > 0.5) drawDetAng(ctx, pt(14), ea, ea >= 80 && ea <= 100);
+    if (ka > 0 && lm[26].visibility > 0.5) drawDetAng(ctx, pt(26), ka, ka >= 130 && ka <= 160);
 
-    updCard('pip-card-elbow',    'pip-val-elbow',    ea,  80, 100);
-    updCard('pip-card-shoulder', 'pip-val-shoulder', sa,  30,  60);
-    updCard('pip-card-knee',     'pip-val-knee',     ka, 130, 160);
-    document.getElementById('pip-coach').textContent = coachMsg(ea, sa, ka);
+    updDetCard('det-card-elbow',    'det-val-elbow',    ea,  80, 100);
+    updDetCard('det-card-shoulder', 'det-val-shoulder', sa,  30,  60);
+    updDetCard('det-card-knee',     'det-val-knee',     ka, 130, 160);
+    document.getElementById('det-coach').textContent = coachDetMsg(ea, sa, ka);
 
-    if (pipIsRec) {
-      composePip();
-      pipLog.push({ t: ((Date.now() - pipRecStart) / 1000).toFixed(2), elbow: ea, shoulder: sa, knee: ka, wlm: results.poseWorldLandmarks || null });
+    if (detIsRec) {
+      composeDet();
+      detLog.push({ t: ((Date.now() - detRecStart) / 1000).toFixed(2), elbow: ea, shoulder: sa, knee: ka, wlm: results.poseWorldLandmarks || null });
     }
   }
 
-  function drawAng(ctx, p, ang, good) {
+  function drawDetAng(ctx, p, ang, good) {
     ctx.strokeStyle = good ? '#10b981' : '#f59e0b'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = 'rgba(0,0,0,0.72)'; ctx.fillRect(p.x - 18, p.y - 28, 36, 16);
@@ -1167,36 +1148,36 @@ init().catch(console.error);
     ctx.fillText(ang + '°', p.x, p.y - 16);
   }
 
-  function composePip() {
-    const W = pipRecCvs.width  = pipCanvas.width;
-    const H = pipRecCvs.height = pipCanvas.height;
-    const rc = pipRecCvs.getContext('2d');
+  function composeDet() {
+    const W = detRecCvs.width  = detCanvas.width;
+    const H = detRecCvs.height = detCanvas.height;
+    const rc = detRecCvs.getContext('2d');
     rc.fillStyle = '#000'; rc.fillRect(0, 0, W, H);
     rc.save(); rc.translate(W, 0); rc.scale(-1, 1);
-    const vw = pipVideo.videoWidth, vh = pipVideo.videoHeight;
+    const vw = detVideo.videoWidth, vh = detVideo.videoHeight;
     if (vw > 0 && vh > 0) {
       const vr = vw / vh, cr = W / H;
       let sx = 0, sy = 0, sw = vw, sh = vh;
       if (vr > cr) { sw = vh * cr; sx = (vw - sw) / 2; } else { sh = vw / cr; sy = (vh - sh) / 2; }
-      rc.globalAlpha = 0.55; rc.drawImage(pipVideo, sx, sy, sw, sh, 0, 0, W, H); rc.globalAlpha = 1;
+      rc.globalAlpha = 0.55; rc.drawImage(detVideo, sx, sy, sw, sh, 0, 0, W, H); rc.globalAlpha = 1;
     }
-    rc.drawImage(pipCanvas, 0, 0, W, H); rc.restore();
+    rc.drawImage(detCanvas, 0, 0, W, H); rc.restore();
   }
 
-  function pipAngle(a, b, c) {
+  function detAngle(a, b, c) {
     const ab = { x: a.x - b.x, y: a.y - b.y }, cb = { x: c.x - b.x, y: c.y - b.y };
     const dot = ab.x * cb.x + ab.y * cb.y, mag = Math.sqrt(ab.x ** 2 + ab.y ** 2) * Math.sqrt(cb.x ** 2 + cb.y ** 2);
     return mag === 0 ? 0 : Math.round(Math.acos(Math.min(1, Math.max(-1, dot / mag))) * 180 / Math.PI);
   }
 
-  function updCard(cid, vid, val, mn, mx) {
+  function updDetCard(cid, vid, val, mn, mx) {
     const card = document.getElementById(cid), el = document.getElementById(vid);
-    if (val <= 0) { el.textContent = '--°'; card.className = 'pip-card'; return; }
+    if (val <= 0) { el.textContent = '--°'; card.className = 'det-card'; return; }
     el.textContent = val + '°';
-    card.className = 'pip-card ' + (val >= mn && val <= mx ? 'good' : 'warn');
+    card.className = 'det-card ' + (val >= mn && val <= mx ? 'good' : 'warn');
   }
 
-  function coachMsg(ea, sa, ka) {
+  function coachDetMsg(ea, sa, ka) {
     const m = [];
     if (ea > 0) m.push(ea < 70 ? '⚡ 手臂彎曲過多' : ea > 120 ? '⚡ 手臂伸太直' : '✓ 手肘角度良好');
     if (sa > 0) m.push(sa < 20 ? '⚡ 轉肩不足' : sa > 70 ? '⚡ 肩膀抬太高' : '✓ 肩膀轉動良好');
@@ -1204,32 +1185,32 @@ init().catch(console.error);
     return m.length ? m.join(' · ') : '等待偵測姿勢...';
   }
 
-  // ---- BVH & CSV math (ported from detection.html) ----
-  const _pv = { sub: (a,b) => ({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}), mid: (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2}), len: v => Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z), norm: v => { const l = Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); return l > 1e-7 ? {x:v.x/l,y:v.y/l,z:v.z/l} : {x:0,y:1,z:0}; }, cross: (a,b) => ({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}), dot: (a,b) => a.x*b.x+a.y*b.y+a.z*b.z };
-  const _pq = { mul: (a,b) => ({x:a.w*b.x+a.x*b.w+a.y*b.z-a.z*b.y,y:a.w*b.y-a.x*b.z+a.y*b.w+a.z*b.x,z:a.w*b.z+a.x*b.y-a.y*b.x+a.z*b.w,w:a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z}), conj: q => ({x:-q.x,y:-q.y,z:-q.z,w:q.w}), norm: q => { const l = Math.sqrt(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w); return l > 1e-7 ? {x:q.x/l,y:q.y/l,z:q.z/l,w:q.w/l} : {x:0,y:0,z:0,w:1}; }, rot: (q,v) => { const qv = {x:v.x,y:v.y,z:v.z,w:0}; const r = _pq.mul(_pq.mul(q,qv),_pq.conj(q)); return {x:r.x,y:r.y,z:r.z}; }, fromDirs: (f,t) => { f = _pv.norm(f); t = _pv.norm(t); const d = _pv.dot(f,t); if (d >= .9999) return {x:0,y:0,z:0,w:1}; if (d <= -.9999) { let ax = _pv.cross(f,{x:1,y:0,z:0}); if (_pv.len(ax) < .01) ax = _pv.cross(f,{x:0,y:0,z:1}); ax = _pv.norm(ax); return {x:ax.x,y:ax.y,z:ax.z,w:0}; } const ax = _pv.cross(f,t); const w = Math.sqrt((1+d)/2); const s = .5/w; return _pq.norm({x:ax.x*s,y:ax.y*s,z:ax.z*s,w}); }, fromMat: m => { const tr = m[0]+m[4]+m[8]; let q; if (tr > 0) { const s = .5/Math.sqrt(tr+1); q = {w:.25/s,x:(m[7]-m[5])*s,y:(m[2]-m[6])*s,z:(m[3]-m[1])*s}; } else if (m[0]>m[4]&&m[0]>m[8]) { const s = 2*Math.sqrt(1+m[0]-m[4]-m[8]); q = {w:(m[7]-m[5])/s,x:.25*s,y:(m[1]+m[3])/s,z:(m[2]+m[6])/s}; } else if (m[4]>m[8]) { const s = 2*Math.sqrt(1+m[4]-m[0]-m[8]); q = {w:(m[2]-m[6])/s,x:(m[1]+m[3])/s,y:.25*s,z:(m[5]+m[7])/s}; } else { const s = 2*Math.sqrt(1+m[8]-m[0]-m[4]); q = {w:(m[3]-m[1])/s,x:(m[2]+m[6])/s,y:(m[5]+m[7])/s,z:.25*s}; } return _pq.norm(q); }, toZXY: q => { const {x,y,z,w} = q, m01=2*(x*y-z*w),m11=1-2*(x*x+z*z),m21=2*(y*z+x*w),m20=2*(x*z-y*w),m22=1-2*(x*x+y*y),m10=2*(x*y+z*w),m00=1-2*(y*y+z*z); const rx = Math.asin(Math.max(-1,Math.min(1,m21))); const ry = Math.abs(m21)<.9999 ? Math.atan2(-m20,m22) : 0; const rz = Math.abs(m21)<.9999 ? Math.atan2(-m01,m11) : Math.atan2(m10,m00); const D = 180/Math.PI; return [rx*D,ry*D,rz*D]; } };
-  const _PBVH = {n:'Hips',ch:6,restDir:null,children:[{n:'Neck',ch:3,restDir:{x:0,y:1,z:0},children:[{n:'Head',ch:3,restDir:{x:0,y:1,z:0},children:[]},{n:'LeftArm',ch:3,restDir:{x:-1,y:0,z:0},children:[{n:'LeftForeArm',ch:3,restDir:{x:-1,y:0,z:0},children:[{n:'LeftHand',ch:3,restDir:{x:-1,y:0,z:0},children:[]}]}]},{n:'RightArm',ch:3,restDir:{x:1,y:0,z:0},children:[{n:'RightForeArm',ch:3,restDir:{x:1,y:0,z:0},children:[{n:'RightHand',ch:3,restDir:{x:1,y:0,z:0},children:[]}]}]}]},{n:'LeftUpLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'LeftLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'LeftFoot',ch:3,restDir:{x:0,y:-1,z:0},children:[]}]}]},{n:'RightUpLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'RightLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'RightFoot',ch:3,restDir:{x:0,y:-1,z:0},children:[]}]}]}]};
-  const _PLM = {L_SHO:11,R_SHO:12,L_ELB:13,R_ELB:14,L_WRI:15,R_WRI:16,L_HIP:23,R_HIP:24,L_KNE:25,R_KNE:26,L_ANK:27,R_ANK:28,NOSE:0};
-  function pwpt(wlm,i){const l=wlm&&wlm[i];return l?{x:l.x,y:-l.y,z:-l.z}:{x:0,y:0,z:0};}
-  function pjPos(wlm){const g=i=>pwpt(wlm,i);const lh=g(_PLM.L_HIP),rh=g(_PLM.R_HIP),ls=g(_PLM.L_SHO),rs=g(_PLM.R_SHO);return{Hips:_pv.mid(lh,rh),Neck:_pv.mid(ls,rs),Head:g(_PLM.NOSE),LeftArm:ls,LeftForeArm:g(_PLM.L_ELB),LeftHand:g(_PLM.L_WRI),RightArm:rs,RightForeArm:g(_PLM.R_ELB),RightHand:g(_PLM.R_WRI),LeftUpLeg:lh,LeftLeg:g(_PLM.L_KNE),LeftFoot:g(_PLM.L_ANK),RightUpLeg:rh,RightLeg:g(_PLM.R_KNE),RightFoot:g(_PLM.R_ANK)};}
-  function pfRot(wlm){const pos=pjPos(wlm),rot={},lh=pwpt(wlm,_PLM.L_HIP),rh=pwpt(wlm,_PLM.R_HIP),ls=pwpt(wlm,_PLM.L_SHO),rs=pwpt(wlm,_PLM.R_SHO),right=_pv.norm(_pv.sub(rh,lh)),spine=_pv.norm(_pv.sub(_pv.mid(ls,rs),_pv.mid(lh,rh))),fwd=_pv.norm(_pv.cross(right,spine)),up=_pv.norm(_pv.cross(fwd,right)),fwd2=_pv.norm(_pv.cross(right,up)),hipQ=_pq.fromMat([right.x,up.x,fwd2.x,right.y,up.y,fwd2.y,right.z,up.z,fwd2.z]);rot['Hips']=_pq.toZXY(hipQ);function trav(node,pp,pQ){const np=pos[node.n];if(!np){rot[node.n]=[0,0,0];return;}const bW=_pv.norm(_pv.sub(np,pp)),bL=_pq.rot(_pq.conj(pQ),bW),lQ=_pq.fromDirs(node.restDir,bL);rot[node.n]=_pq.toZXY(lQ);const nQ=_pq.mul(pQ,lQ);for(const c of node.children)trav(c,np,nQ);}for(const c of _PBVH.children)trav(c,pos['Hips'],hipQ);return rot;}
+  // ---- BVH & CSV math ----
+  const _dv = { sub: (a,b) => ({x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}), mid: (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2}), len: v => Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z), norm: v => { const l = Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); return l > 1e-7 ? {x:v.x/l,y:v.y/l,z:v.z/l} : {x:0,y:1,z:0}; }, cross: (a,b) => ({x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}), dot: (a,b) => a.x*b.x+a.y*b.y+a.z*b.z };
+  const _dq = { mul: (a,b) => ({x:a.w*b.x+a.x*b.w+a.y*b.z-a.z*b.y,y:a.w*b.y-a.x*b.z+a.y*b.w+a.z*b.x,z:a.w*b.z+a.x*b.y-a.y*b.x+a.z*b.w,w:a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z}), conj: q => ({x:-q.x,y:-q.y,z:-q.z,w:q.w}), norm: q => { const l = Math.sqrt(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w); return l > 1e-7 ? {x:q.x/l,y:q.y/l,z:q.z/l,w:q.w/l} : {x:0,y:0,z:0,w:1}; }, rot: (q,v) => { const qv = {x:v.x,y:v.y,z:v.z,w:0}; const r = _dq.mul(_dq.mul(q,qv),_dq.conj(q)); return {x:r.x,y:r.y,z:r.z}; }, fromDirs: (f,t) => { f = _dv.norm(f); t = _dv.norm(t); const d = _dv.dot(f,t); if (d >= .9999) return {x:0,y:0,z:0,w:1}; if (d <= -.9999) { let ax = _dv.cross(f,{x:1,y:0,z:0}); if (_dv.len(ax) < .01) ax = _dv.cross(f,{x:0,y:0,z:1}); ax = _dv.norm(ax); return {x:ax.x,y:ax.y,z:ax.z,w:0}; } const ax = _dv.cross(f,t); const w = Math.sqrt((1+d)/2); const s = .5/w; return _dq.norm({x:ax.x*s,y:ax.y*s,z:ax.z*s,w}); }, fromMat: m => { const tr = m[0]+m[4]+m[8]; let q; if (tr > 0) { const s = .5/Math.sqrt(tr+1); q = {w:.25/s,x:(m[7]-m[5])*s,y:(m[2]-m[6])*s,z:(m[3]-m[1])*s}; } else if (m[0]>m[4]&&m[0]>m[8]) { const s = 2*Math.sqrt(1+m[0]-m[4]-m[8]); q = {w:(m[7]-m[5])/s,x:.25*s,y:(m[1]+m[3])/s,z:(m[2]+m[6])/s}; } else if (m[4]>m[8]) { const s = 2*Math.sqrt(1+m[4]-m[0]-m[8]); q = {w:(m[2]-m[6])/s,x:(m[1]+m[3])/s,y:.25*s,z:(m[5]+m[7])/s}; } else { const s = 2*Math.sqrt(1+m[8]-m[0]-m[4]); q = {w:(m[3]-m[1])/s,x:(m[2]+m[6])/s,y:(m[5]+m[7])/s,z:.25*s}; } return _dq.norm(q); }, toZXY: q => { const {x,y,z,w} = q, m01=2*(x*y-z*w),m11=1-2*(x*x+z*z),m21=2*(y*z+x*w),m20=2*(x*z-y*w),m22=1-2*(x*x+y*y),m10=2*(x*y+z*w),m00=1-2*(y*y+z*z); const rx = Math.asin(Math.max(-1,Math.min(1,m21))); const ry = Math.abs(m21)<.9999 ? Math.atan2(-m20,m22) : 0; const rz = Math.abs(m21)<.9999 ? Math.atan2(-m01,m11) : Math.atan2(m10,m00); const D = 180/Math.PI; return [rx*D,ry*D,rz*D]; } };
+  const _DBVH = {n:'Hips',ch:6,restDir:null,children:[{n:'Neck',ch:3,restDir:{x:0,y:1,z:0},children:[{n:'Head',ch:3,restDir:{x:0,y:1,z:0},children:[]},{n:'LeftArm',ch:3,restDir:{x:-1,y:0,z:0},children:[{n:'LeftForeArm',ch:3,restDir:{x:-1,y:0,z:0},children:[{n:'LeftHand',ch:3,restDir:{x:-1,y:0,z:0},children:[]}]}]},{n:'RightArm',ch:3,restDir:{x:1,y:0,z:0},children:[{n:'RightForeArm',ch:3,restDir:{x:1,y:0,z:0},children:[{n:'RightHand',ch:3,restDir:{x:1,y:0,z:0},children:[]}]}]}]},{n:'LeftUpLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'LeftLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'LeftFoot',ch:3,restDir:{x:0,y:-1,z:0},children:[]}]}]},{n:'RightUpLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'RightLeg',ch:3,restDir:{x:0,y:-1,z:0},children:[{n:'RightFoot',ch:3,restDir:{x:0,y:-1,z:0},children:[]}]}]}]};
+  const _DLM = {L_SHO:11,R_SHO:12,L_ELB:13,R_ELB:14,L_WRI:15,R_WRI:16,L_HIP:23,R_HIP:24,L_KNE:25,R_KNE:26,L_ANK:27,R_ANK:28,NOSE:0};
+  function dwpt(wlm,i){const l=wlm&&wlm[i];return l?{x:l.x,y:-l.y,z:-l.z}:{x:0,y:0,z:0};}
+  function djPos(wlm){const g=i=>dwpt(wlm,i);const lh=g(_DLM.L_HIP),rh=g(_DLM.R_HIP),ls=g(_DLM.L_SHO),rs=g(_DLM.R_SHO);return{Hips:_dv.mid(lh,rh),Neck:_dv.mid(ls,rs),Head:g(_DLM.NOSE),LeftArm:ls,LeftForeArm:g(_DLM.L_ELB),LeftHand:g(_DLM.L_WRI),RightArm:rs,RightForeArm:g(_DLM.R_ELB),RightHand:g(_DLM.R_WRI),LeftUpLeg:lh,LeftLeg:g(_DLM.L_KNE),LeftFoot:g(_DLM.L_ANK),RightUpLeg:rh,RightLeg:g(_DLM.R_KNE),RightFoot:g(_DLM.R_ANK)};}
+  function dfRot(wlm){const pos=djPos(wlm),rot={},lh=dwpt(wlm,_DLM.L_HIP),rh=dwpt(wlm,_DLM.R_HIP),ls=dwpt(wlm,_DLM.L_SHO),rs=dwpt(wlm,_DLM.R_SHO),right=_dv.norm(_dv.sub(rh,lh)),spine=_dv.norm(_dv.sub(_dv.mid(ls,rs),_dv.mid(lh,rh))),fwd=_dv.norm(_dv.cross(right,spine)),up=_dv.norm(_dv.cross(fwd,right)),fwd2=_dv.norm(_dv.cross(right,up)),hipQ=_dq.fromMat([right.x,up.x,fwd2.x,right.y,up.y,fwd2.y,right.z,up.z,fwd2.z]);rot['Hips']=_dq.toZXY(hipQ);function trav(node,pp,pQ){const np=pos[node.n];if(!np){rot[node.n]=[0,0,0];return;}const bW=_dv.norm(_dv.sub(np,pp)),bL=_dq.rot(_dq.conj(pQ),bW),lQ=_dq.fromDirs(node.restDir,bL);rot[node.n]=_dq.toZXY(lQ);const nQ=_dq.mul(pQ,lQ);for(const c of node.children)trav(c,np,nQ);}for(const c of _DBVH.children)trav(c,pos['Hips'],hipQ);return rot;}
 
-  function buildFullCSVPip(frames) {
+  function buildFullCSVDet(frames) {
     const vf = frames.filter(f => f.wlm); if (!vf.length) return null;
-    const order = []; function cn(node){order.push(node.n);for(const c of node.children)cn(c);} cn(_PBVH);
+    const order = []; function cn(node){order.push(node.n);for(const c of node.children)cn(c);} cn(_DBVH);
     const hdr = ['﻿時間(秒)','Hips_x','Hips_y','Hips_z']; for(const n of order)hdr.push(n+'_rz',n+'_rx',n+'_ry');
     const rows = [hdr.join(',')];
-    for(const f of vf){const pos=pjPos(f.wlm),rot=pfRot(f.wlm),hp=pos['Hips'];const vals=[f.t,hp.x.toFixed(4),hp.y.toFixed(4),hp.z.toFixed(4)];for(const n of order){const r=rot[n]||[0,0,0];vals.push(r[2].toFixed(2),r[0].toFixed(2),r[1].toFixed(2));}rows.push(vals.join(','));}
+    for(const f of vf){const pos=djPos(f.wlm),rot=dfRot(f.wlm),hp=pos['Hips'];const vals=[f.t,hp.x.toFixed(4),hp.y.toFixed(4),hp.z.toFixed(4)];for(const n of order){const r=rot[n]||[0,0,0];vals.push(r[2].toFixed(2),r[0].toFixed(2),r[1].toFixed(2));}rows.push(vals.join(','));}
     return rows.join('\n');
   }
 
-  function genBVHPip(frames, fps) {
+  function genBVHDet(frames, fps) {
     if (!frames.length) return '';
     const vf = frames.filter(f => f.wlm); if (!vf.length) return '';
-    const pos0 = pjPos(vf[0].wlm);
-    const order = []; function cN(n){order.push(n.n);for(const c of n.children)cN(c);} cN(_PBVH);
-    function bN(node,pN,d){const pad='\t'.repeat(d),pp=pN?pos0[pN]:null,np=pos0[node.n]||{x:0,y:0,z:0},off=pp?_pv.sub(np,pp):{x:0,y:0,z:0},o=off.x.toFixed(4)+' '+off.y.toFixed(4)+' '+off.z.toFixed(4);let s=(!pN?'ROOT '+node.n+'\n':pad+'JOINT '+node.n+'\n')+pad+'{\n'+pad+'\tOFFSET '+o+'\n';s+=(!pN?pad+'\tCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n':pad+'\tCHANNELS 3 Zrotation Xrotation Yrotation\n');if(node.children.length){for(const c of node.children)s+=bN(c,node.n,d+1);}else{s+=pad+'\tEnd Site\n'+pad+'\t{\n'+pad+'\t\tOFFSET 0.0000 0.0500 0.0000\n'+pad+'\t}\n';}return s+pad+'}\n';}
-    let bvh='HIERARCHY\n'+bN(_PBVH,null,0)+'MOTION\nFrames: '+vf.length+'\nFrame Time: '+(1/fps).toFixed(6)+'\n';
-    for(const f of vf){const pos=pjPos(f.wlm),rot=pfRot(f.wlm),hp=pos['Hips'],hr=rot['Hips']||[0,0,0];const vals=[hp.x.toFixed(4),hp.y.toFixed(4),hp.z.toFixed(4),hr[2].toFixed(4),hr[0].toFixed(4),hr[1].toFixed(4)];for(const n of order.slice(1)){const r=rot[n]||[0,0,0];vals.push(r[2].toFixed(4),r[0].toFixed(4),r[1].toFixed(4));}bvh+=vals.join(' ')+'\n';}
+    const pos0 = djPos(vf[0].wlm);
+    const order = []; function cN(n){order.push(n.n);for(const c of n.children)cN(c);} cN(_DBVH);
+    function bN(node,pN,d){const pad='\t'.repeat(d),pp=pN?pos0[pN]:null,np=pos0[node.n]||{x:0,y:0,z:0},off=pp?_dv.sub(np,pp):{x:0,y:0,z:0},o=off.x.toFixed(4)+' '+off.y.toFixed(4)+' '+off.z.toFixed(4);let s=(!pN?'ROOT '+node.n+'\n':pad+'JOINT '+node.n+'\n')+pad+'{\n'+pad+'\tOFFSET '+o+'\n';s+=(!pN?pad+'\tCHANNELS 6 Xposition Yposition Zposition Zrotation Xrotation Yrotation\n':pad+'\tCHANNELS 3 Zrotation Xrotation Yrotation\n');if(node.children.length){for(const c of node.children)s+=bN(c,node.n,d+1);}else{s+=pad+'\tEnd Site\n'+pad+'\t{\n'+pad+'\t\tOFFSET 0.0000 0.0500 0.0000\n'+pad+'\t}\n';}return s+pad+'}\n';}
+    let bvh='HIERARCHY\n'+bN(_DBVH,null,0)+'MOTION\nFrames: '+vf.length+'\nFrame Time: '+(1/fps).toFixed(6)+'\n';
+    for(const f of vf){const pos=djPos(f.wlm),rot=dfRot(f.wlm),hp=pos['Hips'],hr=rot['Hips']||[0,0,0];const vals=[hp.x.toFixed(4),hp.y.toFixed(4),hp.z.toFixed(4),hr[2].toFixed(4),hr[0].toFixed(4),hr[1].toFixed(4)];for(const n of order.slice(1)){const r=rot[n]||[0,0,0];vals.push(r[2].toFixed(4),r[0].toFixed(4),r[1].toFixed(4));}bvh+=vals.join(' ')+'\n';}
     return bvh;
   }
 })();
