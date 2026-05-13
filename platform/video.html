@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>揮拍影片</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dplayer@1.27.1/dist/DPlayer.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: "Noto Sans TC", system-ui, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid rgba(0,245,255,.12); background: rgba(0,0,0,.6); backdrop-filter: blur(8px); }
+  header a { font-size: 13px; color: #94a3b8; text-decoration: none; border: 1px solid rgba(148,163,184,.3); padding: 5px 12px; border-radius: 4px; }
+  header a:hover { color: #e2e8f0; border-color: rgba(148,163,184,.6); }
+  header h1 { font-size: 16px; color: #e2e8f0; }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 24px 16px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* player + danmaku overlay */
+  .player-wrap { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
+  #dplayer { width: 100%; }
+  .danmaku-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 40px; pointer-events: none; overflow: hidden; }
+  .dm-item { position: absolute; left: 100%; white-space: nowrap; font-size: 20px; font-weight: 600; text-shadow: 1px 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.7); line-height: 1.2; }
+
+  /* danmaku input */
+  .dm-input-bar { display: flex; gap: 8px; align-items: center; }
+  .dm-input-bar input { flex: 1; padding: 9px 12px; border-radius: 6px; border: 1px solid rgba(0,245,255,.25); background: rgba(255,255,255,.06); color: #e2e8f0; font-size: 14px; outline: none; }
+  .dm-input-bar input:focus { border-color: rgba(0,245,255,.55); }
+  .dm-input-bar input::placeholder { color: #475569; }
+  .dm-send-btn { padding: 9px 18px; border-radius: 6px; border: 1px solid rgba(0,245,255,.35); background: rgba(0,245,255,.08); color: #00f5ff; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .15s; }
+  .dm-send-btn:hover { background: rgba(0,245,255,.18); }
+  .color-dots { display: flex; gap: 6px; }
+  .color-dot { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color .1s; }
+  .color-dot.active { border-color: #fff; }
+
+  /* video info */
+  .info-box { background: #111827; border: 1px solid rgba(0,245,255,.1); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .info-title { font-size: 18px; font-weight: 700; }
+  .info-meta  { font-size: 12px; color: #64748b; }
+
+  /* danmaku list */
+  .dm-list { background: #111827; border: 1px solid rgba(0,245,255,.1); border-radius: 10px; padding: 16px 18px; }
+  .dm-list h3 { font-size: 13px; color: #64748b; margin-bottom: 10px; }
+  .dm-row { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px; }
+  .dm-row:last-child { border-bottom: none; }
+  .dm-time { color: #00f5ff; font-size: 11px; min-width: 38px; font-variant-numeric: tabular-nums; }
+  .dm-text { flex: 1; }
+  .dm-empty { color: #475569; font-size: 13px; }
+
+  .loading { text-align: center; color: #475569; padding: 40px 0; }
+  .error   { color: #f87171; text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html">← 返回列表</a>
+  <h1 id="page-title">載入中…</h1>
+</header>
+
+<div class="page">
+  <div id="main-status" class="loading">載入影片資料中…</div>
+
+  <div id="content" style="display:none; flex-direction:column; gap:20px;">
+    <!-- player -->
+    <div class="player-wrap">
+      <div id="dplayer"></div>
+      <div class="danmaku-overlay" id="dm-overlay"></div>
+    </div>
+
+    <!-- danmaku input -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div class="dm-input-bar">
+        <input id="dm-text" type="text" placeholder="發表彈幕（按 Enter 或點發送）" maxlength="50">
+        <button class="dm-send-btn" id="dm-send">發送</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:12px;color:#475569;">顏色：</span>
+        <div class="color-dots" id="color-dots">
+          <div class="color-dot active" data-color="#ffffff" style="background:#fff;"></div>
+          <div class="color-dot" data-color="#facc15" style="background:#facc15;"></div>
+          <div class="color-dot" data-color="#f87171" style="background:#f87171;"></div>
+          <div class="color-dot" data-color="#4ade80" style="background:#4ade80;"></div>
+          <div class="color-dot" data-color="#38bdf8" style="background:#38bdf8;"></div>
+          <div class="color-dot" data-color="#f472b6" style="background:#f472b6;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- video info -->
+    <div class="info-box">
+      <div class="info-title" id="vid-title"></div>
+      <div class="info-meta"  id="vid-meta"></div>
+    </div>
+
+    <!-- danmaku list -->
+    <div class="dm-list">
+      <h3>所有彈幕</h3>
+      <div id="dm-list-body"><span class="dm-empty">還沒有彈幕，快來留言！</span></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dplayer@1.27.1/dist/DPlayer.min.js"></script>
+<script>
+(async () => {
+  const params  = new URLSearchParams(location.search);
+  const videoId = params.get('id');
+  const statusEl = document.getElementById('main-status');
+
+  if (!videoId) {
+    statusEl.className = 'error';
+    statusEl.textContent = '缺少影片 ID';
+    return;
+  }
+
+  // ---- load video metadata ----
+  let videoData;
+  try {
+    const doc = await db.collection('videos').doc(videoId).get();
+    if (!doc.exists) { statusEl.className = 'error'; statusEl.textContent = '找不到此影片'; return; }
+    videoData = doc.data();
+  } catch(e) {
+    statusEl.className = 'error'; statusEl.textContent = '載入失敗：' + e.message; return;
+  }
+
+  // ---- show UI ----
+  statusEl.style.display = 'none';
+  const contentEl = document.getElementById('content');
+  contentEl.style.display = 'flex';
+
+  document.getElementById('page-title').textContent = videoData.title;
+  document.getElementById('vid-title').textContent   = videoData.title;
+  const dateStr = videoData.uploadedAt
+    ? new Date(videoData.uploadedAt.toDate()).toLocaleString('zh-TW')
+    : '—';
+  document.getElementById('vid-meta').textContent = '上傳於 ' + dateStr;
+
+  // ---- DPlayer (no built-in danmaku) ----
+  const dp = new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: { url: videoData.url, type: 'auto' },
+    theme: '#00f5ff',
+    lang: 'zh-tw',
+  });
+
+  // ---- danmaku engine ----
+  const overlay  = document.getElementById('dm-overlay');
+  const LANES    = 10;
+  const laneEnd  = new Array(LANES).fill(0);
+  let   danmakuAll = [];
+
+  function getFreeLane() {
+    const now = performance.now();
+    let idx = laneEnd.findIndex(t => t <= now);
+    if (idx === -1) idx = Math.floor(Math.random() * LANES);
+    return idx;
+  }
+
+  function flyText(text, color) {
+    const span = document.createElement('span');
+    span.className = 'dm-item';
+    span.textContent = text;
+    span.style.color = color;
+    overlay.appendChild(span);
+
+    const lane    = getFreeLane();
+    const laneH   = overlay.offsetHeight / LANES;
+    span.style.top = (lane * laneH + (laneH - 24) / 2) + 'px';
+
+    const W    = overlay.offsetWidth;
+    const dur  = 9000 + Math.random() * 2000; // 9–11 s
+    laneEnd[lane] = performance.now() + dur;
+
+    const start = performance.now();
+    function tick(now) {
+      const p = (now - start) / dur;
+      if (p >= 1) { span.remove(); return; }
+      span.style.transform = 'translateX(' + (-(W + span.offsetWidth) * p) + 'px)';
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Replay danmaku on timeupdate
+  const shown = new Set();
+  dp.video.addEventListener('timeupdate', () => {
+    const t = dp.video.currentTime;
+    danmakuAll.forEach((d, i) => {
+      if (!shown.has(i) && d.time <= t && t - d.time < 0.5) {
+        shown.add(i);
+        flyText(d.text, d.color);
+      }
+    });
+  });
+  dp.video.addEventListener('seeked', () => shown.clear());
+
+  // ---- load danmaku from Firestore ----
+  async function loadDanmaku() {
+    const snap = await db.collection('danmaku').doc(videoId)
+      .collection('comments').orderBy('time').get();
+
+    danmakuAll = snap.docs.map(d => d.data());
+    shown.clear();
+    renderDanmakuList();
+  }
+
+  function renderDanmakuList() {
+    const body = document.getElementById('dm-list-body');
+    if (!danmakuAll.length) {
+      body.innerHTML = '<span class="dm-empty">還沒有彈幕，快來留言！</span>';
+      return;
+    }
+    body.innerHTML = danmakuAll.map(d => `
+      <div class="dm-row">
+        <span class="dm-time" style="color:${escHtml(d.color)}">${fmtTime(d.time)}</span>
+        <span class="dm-text">${escHtml(d.text)}</span>
+      </div>`).join('');
+  }
+
+  await loadDanmaku();
+
+  // ---- send danmaku ----
+  let selectedColor = '#ffffff';
+  document.getElementById('color-dots').addEventListener('click', e => {
+    const dot = e.target.closest('.color-dot');
+    if (!dot) return;
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    selectedColor = dot.dataset.color;
+  });
+
+  async function sendDanmaku() {
+    const input = document.getElementById('dm-text');
+    const text  = input.value.trim();
+    if (!text) return;
+    const time  = dp.video.currentTime;
+
+    const entry = { text, color: selectedColor, time,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+    try {
+      await db.collection('danmaku').doc(videoId).collection('comments').add(entry);
+      input.value = '';
+      flyText(text, selectedColor);
+      danmakuAll.push({ text, color: selectedColor, time });
+      danmakuAll.sort((a, b) => a.time - b.time);
+      renderDanmakuList();
+    } catch(e) {
+      alert('發送失敗：' + e.message);
+    }
+  }
+
+  document.getElementById('dm-send').addEventListener('click', sendDanmaku);
+  document.getElementById('dm-text').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendDanmaku();
+  });
+
+  // ---- helpers ----
+  function fmtTime(s) {
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乒乓球揮拍社群</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; color: #e2e8f0; font-family: "Noto Sans TC", system-ui, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid rgba(0,245,255,.12); background: rgba(0,0,0,.6); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 18px; color: #00f5ff; letter-spacing: .05em; }
+  header a { font-size: 13px; color: #94a3b8; text-decoration: none; border: 1px solid rgba(148,163,184,.3); padding: 5px 12px; border-radius: 4px; }
+  header a:hover { color: #e2e8f0; border-color: rgba(148,163,184,.6); }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+  .card { background: #111827; border: 1px solid rgba(0,245,255,.1); border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform .15s, border-color .15s; text-decoration: none; color: inherit; display: block; }
+  .card:hover { transform: translateY(-3px); border-color: rgba(0,245,255,.35); }
+  .card-thumb { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; overflow: hidden; }
+  .card-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-thumb .play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.35); opacity: 0; transition: opacity .15s; }
+  .card:hover .play-icon { opacity: 1; }
+  .play-icon svg { width: 44px; height: 44px; fill: rgba(255,255,255,.85); }
+  .card-body { padding: 12px 14px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: 11px; color: #64748b; }
+  .empty { text-align: center; color: #475569; padding: 60px 0; font-size: 15px; }
+  .loading { text-align: center; color: #475569; padding: 60px 0; }
+  .spinner { width: 32px; height: 32px; border: 3px solid rgba(0,245,255,.15); border-top-color: #00f5ff; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏓 乒乓球揮拍社群</h1>
+  <a href="../tabletennis-forehand.html">← 回到練習</a>
+</header>
+<main>
+  <div id="status" class="loading"><div class="spinner"></div>載入中…</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(async () => {
+  const status = document.getElementById('status');
+  const grid   = document.getElementById('grid');
+
+  try {
+    const snap = await db.collection('videos')
+      .orderBy('uploadedAt', 'desc')
+      .limit(60)
+      .get();
+
+    status.style.display = 'none';
+
+    if (snap.empty) {
+      grid.innerHTML = '<p class="empty">還沒有影片，快去錄製你的第一支揮拍吧！</p>';
+      return;
+    }
+
+    snap.forEach(doc => {
+      const d = doc.data();
+      const date = d.uploadedAt
+        ? new Date(d.uploadedAt.toDate()).toLocaleDateString('zh-TW')
+        : '—';
+      const size = d.size ? (d.size / 1024 / 1024).toFixed(1) + ' MB' : '';
+
+      const a = document.createElement('a');
+      a.className = 'card';
+      a.href = 'video.html?id=' + doc.id;
+      a.innerHTML = `
+        <div class="card-thumb">
+          <video src="${d.url}" preload="metadata" muted playsinline></video>
+          <div class="play-icon">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">${escHtml(d.title)}</div>
+          <div class="card-meta">${date}${size ? ' · ' + size : ''}</div>
+        </div>`;
+      grid.appendChild(a);
+    });
+  } catch(e) {
+    status.innerHTML = '<p class="empty">載入失敗：' + e.message + '</p>';
+  }
+})();
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

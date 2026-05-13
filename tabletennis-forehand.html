@@ -124,6 +124,11 @@
   .pip-dl-btn { display: inline-block; padding: 6px 14px; border: 1px solid rgba(0,245,255,.3); border-radius: 4px; color: #00f5ff; font-size: 11px; text-decoration: none; cursor: pointer; transition: all .15s; font-family: "Noto Sans TC", sans-serif; }
   .pip-dl-btn:hover { background: rgba(0,245,255,.1); border-color: rgba(0,245,255,.7); }
   .pip-dl-btn.pip-dl-primary { background: rgba(0,245,255,.08); border-color: rgba(0,245,255,.55); }
+  .pip-dl-btn.pip-dl-green { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.6); color: #10b981; }
+  .pip-dl-btn.pip-dl-green:hover { background: rgba(16,185,129,.25); }
+  #det-pub-panel input { width:100%; box-sizing:border-box; padding:8px 10px; border-radius:5px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.07); color:#e2e8f0; font-size:13px; outline:none; }
+  #det-pub-panel input::placeholder { color:#64748b; }
+  #det-pub-panel input:focus { border-color:rgba(16,185,129,.6); }
   .pip-dl-hint { font-size: 10px; color: #666; font-family: monospace; line-height: 1.5; }
   .pip-dl-close { align-self: flex-end; background: none; border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.5); padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: "Noto Sans TC", sans-serif; transition: all .15s; margin-top: 4px; }
   .pip-dl-close:hover { border-color: rgba(230,57,70,.5); color: #e63946; }
@@ -899,14 +904,33 @@ init().catch(console.error);
     <video id="det-dl-preview" controls style="width:100%;max-height:180px;margin:4px 0;border-radius:4px;background:#000;"></video>
     <div class="pip-dl-btns">
       <a id="det-dl-link" class="pip-dl-btn pip-dl-primary">下載影片</a>
-      <a id="det-dl-csv" class="pip-dl-btn">CSV (3 關節)</a>
-      <a id="det-dl-full-csv" class="pip-dl-btn" style="display:none">CSV (15 關節)</a>
-      <a id="det-dl-bvh" class="pip-dl-btn">BVH 動畫</a>
+      <button id="det-pub-btn" class="pip-dl-btn pip-dl-green">發布到平台</button>
     </div>
-    <div id="det-dl-bvh-hint" class="pip-dl-hint" style="display:none"></div>
+    <div id="det-pub-panel" style="display:none;flex-direction:column;gap:7px;margin-top:2px;">
+      <input id="det-pub-title" type="text" placeholder="輸入標題（最多 30 字）" maxlength="30">
+      <button id="det-pub-confirm" class="pip-dl-btn pip-dl-green" style="width:100%;text-align:center;">確認發布</button>
+      <div id="det-pub-status" style="font-size:12px;color:#94a3b8;text-align:center;min-height:16px;"></div>
+    </div>
     <button id="det-dl-close-btn" class="pip-dl-close">關閉</button>
   </div>
 </div>
+
+<!-- Firebase compat SDK (no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyDuErikHul-5eREA87ea_va1XgjgmXB34M",
+    authDomain: "tabletennis-community.firebaseapp.com",
+    projectId: "tabletennis-community",
+    storageBucket: "tabletennis-community.firebasestorage.app",
+    messagingSenderId: "816767387756",
+    appId: "1:816767387756:web:101281d898825b4d347049"
+  });
+  const _db = firebase.firestore();
+  const _storage = firebase.storage();
+</script>
 
 <script>
 (function () {
@@ -929,6 +953,7 @@ init().catch(console.error);
   let detRecorder = null, detChunks = [], detIsRec = false;
   let detRecInterval = null, detRecStart = 0;
   let detLog = [], detFpsEst = 30;
+  let detLastBlob = null, detLastExt = 'webm';
 
   const detVideo  = document.getElementById('det-video');
   const detCanvas = document.getElementById('det-canvas');
@@ -949,7 +974,7 @@ init().catch(console.error);
   document.getElementById('det-rec-btn').addEventListener('click', () => detIsRec ? stopDetRec() : startDetRec());
 
   function startDetRec() {
-    detRecCvs.width  = detCanvas.offsetWidth  || 400;
+    detRecCvs.width  = (detCanvas.offsetWidth  || 400) * 2;
     detRecCvs.height = detCanvas.offsetHeight || 300;
     detChunks = []; detLog = [];
     const types = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
@@ -986,6 +1011,7 @@ init().catch(console.error);
     const mime = detRecorder.mimeType;
     const ext  = mime.includes('mp4') ? 'mp4' : 'webm';
     const blob = new Blob(detChunks, { type: mime });
+    detLastBlob = blob; detLastExt = ext;
     const url  = URL.createObjectURL(blob);
     document.getElementById('det-dl-size').textContent = (blob.size/1024/1024).toFixed(1) + ' MB · ' + ext.toUpperCase();
     const preview = document.getElementById('det-dl-preview');
@@ -994,44 +1020,18 @@ init().catch(console.error);
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) { link.target = '_blank'; link.textContent = '在新分頁開啟影片'; }
     else        { link.target = ''; link.download = 'pose-' + Date.now() + '.' + ext; link.textContent = '下載影片'; }
-
-    const c3 = ['﻿時間(秒),手肘角度,肩膀抬高,膝蓋彎曲'];
-    detLog.forEach(r => c3.push(r.t + ',' + r.elbow + ',' + r.shoulder + ',' + r.knee));
-    const csv3 = document.getElementById('det-dl-csv');
-    csv3.href = URL.createObjectURL(new Blob([c3.join('\n')], { type:'text/csv;charset=utf-8;' }));
-    csv3.download = 'pose-3joint-' + Date.now() + '.csv';
-
-    const fullCsv = buildFullCSVDet(detLog);
-    const fcLink  = document.getElementById('det-dl-full-csv');
-    if (fullCsv) {
-      fcLink.href = URL.createObjectURL(new Blob([fullCsv], { type:'text/csv;charset=utf-8;' }));
-      fcLink.download = 'pose-15joint-' + Date.now() + '.csv';
-      fcLink.style.display = 'inline-block';
-    } else { fcLink.style.display = 'none'; }
-
-    const bvhText = genBVHDet(detLog, detFpsEst);
-    const bvhLink = document.getElementById('det-dl-bvh');
-    const bvhHint = document.getElementById('det-dl-bvh-hint');
-    if (bvhText) {
-      bvhLink.href = URL.createObjectURL(new Blob([bvhText], { type:'text/plain' }));
-      if (isIOS) { bvhLink.target = '_blank'; bvhLink.textContent = '開啟 BVH'; bvhHint.textContent = 'iOS 請長按連結儲存'; bvhHint.style.display = 'block'; }
-      else        { bvhLink.download = 'pose-' + Date.now() + '.bvh'; bvhLink.textContent = '下載 BVH 動畫'; bvhHint.style.display = 'none'; }
-      bvhLink.style.opacity = '1'; bvhLink.style.pointerEvents = 'auto';
-    } else {
-      bvhLink.style.opacity = '0.35'; bvhLink.style.pointerEvents = 'none';
-      bvhLink.textContent = 'BVH（需要 3D 資料）';
-      bvhHint.textContent = '3D 世界座標不可用，請確認 MediaPipe 版本'; bvhHint.style.display = 'block';
-    }
     document.getElementById('det-dl-overlay').style.display = 'flex';
   }
 
   document.getElementById('det-dl-close-btn').addEventListener('click', () => {
-    ['det-dl-link','det-dl-csv','det-dl-full-csv','det-dl-bvh'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el && el.href && el.href.startsWith('blob:')) URL.revokeObjectURL(el.href);
-    });
+    const link = document.getElementById('det-dl-link');
+    if (link && link.href && link.href.startsWith('blob:')) URL.revokeObjectURL(link.href);
     const prev = document.getElementById('det-dl-preview');
     if (prev.src && prev.src.startsWith('blob:')) { URL.revokeObjectURL(prev.src); prev.src = ''; }
+    document.getElementById('det-pub-panel').style.display = 'none';
+    document.getElementById('det-pub-status').textContent = '';
+    document.getElementById('det-pub-title').value = '';
+    document.getElementById('det-pub-confirm').disabled = false;
     document.getElementById('det-dl-overlay').style.display = 'none';
   });
 
@@ -1149,19 +1149,37 @@ init().catch(console.error);
   }
 
   function composeDet() {
-    const W = detRecCvs.width  = detCanvas.width;
-    const H = detRecCvs.height = detCanvas.height;
+    const camW = detCanvas.width;
+    const H    = detCanvas.height;
+    const W    = camW * 2;
+    detRecCvs.width  = W;
+    detRecCvs.height = H;
     const rc = detRecCvs.getContext('2d');
     rc.fillStyle = '#000'; rc.fillRect(0, 0, W, H);
-    rc.save(); rc.translate(W, 0); rc.scale(-1, 1);
+
+    // left half: mirrored camera + skeleton
+    rc.save();
+    rc.beginPath(); rc.rect(0, 0, camW, H); rc.clip();
+    rc.translate(camW, 0); rc.scale(-1, 1);
     const vw = detVideo.videoWidth, vh = detVideo.videoHeight;
     if (vw > 0 && vh > 0) {
-      const vr = vw / vh, cr = W / H;
+      const vr = vw / vh, cr = camW / H;
       let sx = 0, sy = 0, sw = vw, sh = vh;
       if (vr > cr) { sw = vh * cr; sx = (vw - sw) / 2; } else { sh = vw / cr; sy = (vh - sh) / 2; }
-      rc.globalAlpha = 0.55; rc.drawImage(detVideo, sx, sy, sw, sh, 0, 0, W, H); rc.globalAlpha = 1;
+      rc.globalAlpha = 0.55; rc.drawImage(detVideo, sx, sy, sw, sh, 0, 0, camW, H); rc.globalAlpha = 1;
     }
-    rc.drawImage(detCanvas, 0, 0, W, H); rc.restore();
+    rc.drawImage(detCanvas, 0, 0, camW, H);
+    rc.restore();
+
+    // right half: 3D model (Three.js canvas, preserveDrawingBuffer:true)
+    const threeCvs = document.getElementById('canvas');
+    if (threeCvs && threeCvs.width > 0) {
+      const tw = threeCvs.width, th = threeCvs.height;
+      const tr = tw / th, hr = camW / H;
+      let sx = 0, sy = 0, sw = tw, sh = th;
+      if (tr > hr) { sw = th * hr; sx = (tw - sw) / 2; } else { sh = tw / hr; sy = (th - sh) / 2; }
+      rc.drawImage(threeCvs, sx, sy, sw, sh, camW, 0, camW, H);
+    }
   }
 
   function detAngle(a, b, c) {
@@ -1213,6 +1231,56 @@ init().catch(console.error);
     for(const f of vf){const pos=djPos(f.wlm),rot=dfRot(f.wlm),hp=pos['Hips'],hr=rot['Hips']||[0,0,0];const vals=[hp.x.toFixed(4),hp.y.toFixed(4),hp.z.toFixed(4),hr[2].toFixed(4),hr[0].toFixed(4),hr[1].toFixed(4)];for(const n of order.slice(1)){const r=rot[n]||[0,0,0];vals.push(r[2].toFixed(4),r[0].toFixed(4),r[1].toFixed(4));}bvh+=vals.join(' ')+'\n';}
     return bvh;
   }
+
+  // ---- publish to platform ----
+  document.getElementById('det-pub-btn').addEventListener('click', () => {
+    const panel = document.getElementById('det-pub-panel');
+    panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  document.getElementById('det-pub-confirm').addEventListener('click', async () => {
+    const title  = document.getElementById('det-pub-title').value.trim();
+    const status = document.getElementById('det-pub-status');
+    const btn    = document.getElementById('det-pub-confirm');
+    if (!title)        { status.textContent = '⚠ 請輸入標題'; return; }
+    if (!detLastBlob)  { status.textContent = '⚠ 沒有影片，請重新錄影'; return; }
+
+    btn.disabled = true;
+    status.textContent = '上傳中… 0%';
+
+    const filename = 'videos/' + Date.now() + '.' + detLastExt;
+    const ref  = _storage.ref(filename);
+    const task = ref.put(detLastBlob, { contentType: detLastBlob.type });
+
+    task.on('state_changed',
+      snap => {
+        const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+        status.textContent = '上傳中… ' + pct + '%';
+      },
+      err => {
+        status.textContent = '✗ 上傳失敗：' + err.message;
+        btn.disabled = false;
+      },
+      async () => {
+        try {
+          const url = await task.snapshot.ref.getDownloadURL();
+          const doc = await _db.collection('videos').add({
+            title,
+            url,
+            ext: detLastExt,
+            size: detLastBlob.size,
+            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          const base     = location.href.replace(/[^/]*$/, '');
+          const videoUrl = base + 'platform/video.html?id=' + doc.id;
+          status.innerHTML = '✓ 發布成功！<br><a href="' + videoUrl + '" target="_blank" style="color:#10b981;text-decoration:underline;">查看影片 →</a>';
+        } catch(e) {
+          status.textContent = '✗ 儲存失敗：' + e.message;
+        }
+        btn.disabled = false;
+      }
+    );
+  });
 })();
 </script>
 </body>
