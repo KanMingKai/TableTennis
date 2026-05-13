@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>正手動作</title>
+<title>正手動作解析</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Bebas+Neue&display=swap');
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -141,8 +141,8 @@
     <div class="divider"></div>
     <div class="brand">TABLE<em>·</em>TENNIS</div>
     <div class="divider"></div>
-    <div class="topbar-subtitle">動作</div>
-    <div class="topbar-badge">正手</div>
+    <div class="topbar-subtitle">動作解析</div>
+    <div class="topbar-badge">焦點：正手</div>
   </header>
   <div class="viewport" id="viewport">
     <canvas id="canvas"></canvas>
@@ -150,7 +150,7 @@
     <div class="corner c-br"></div>
     <div class="loading" id="loading">
       <div class="loading-ring"></div>
-      <div class="loading-text">載入模型</div>
+      <div class="loading-text">AI 系統準備中...</div>
     </div>
     <!-- Bone overlay SVG -->
     <svg id="bone-overlay" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4;display:none;">
@@ -166,8 +166,8 @@
       <path id="arc-angle" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
       <rect id="angle-bg" rx="5" ry="5" fill="rgba(0,0,0,0.72)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
       <text id="angle-text" fill="#ffffff" font-family="monospace" font-size="14" font-weight="bold" text-anchor="middle" dominant-baseline="middle"/>
-      <text id="label-spine" fill="#00e5ff" font-family="monospace" font-size="11" opacity="0.85">脊椎軸</text>
-      <text id="label-leg"   fill="#ffcc00" font-family="monospace" font-size="11" opacity="0.85">垂直基準</text>
+      <text id="label-spine" fill="#00e5ff" font-family="monospace" font-size="11" opacity="0.85">身體中軸</text>
+      <text id="label-leg"   fill="#ffcc00" font-family="monospace" font-size="11" opacity="0.85">垂直基準線</text>
       <!-- shoulder mode elements -->
       <line id="line-shoulder-ref" stroke="rgba(255,255,255,0.35)" stroke-width="1.8" stroke-dasharray="8 4"/>
       <line id="line-shoulder-cur" stroke="#ff4d6d" stroke-width="2.5" stroke-linecap="round" filter="url(#glow-yellow)"/>
@@ -175,12 +175,12 @@
       <circle id="dot-rshoulder" r="5" fill="#ff4d6d" opacity="0.9"/>
       <!-- delta angle badge -->
       <rect id="delta-bg" rx="5" ry="5" fill="rgba(0,0,0,0.75)" stroke="#ff4d6d" stroke-width="1"/>
-      <text id="delta-label" fill="rgba(255,77,109,0.7)" font-family="monospace" font-size="10" text-anchor="middle">旋轉角</text>
+      <text id="delta-label" fill="rgba(255,77,109,0.7)" font-family="monospace" font-size="10" text-anchor="middle">身體旋轉角度</text>
       <text id="delta-text"  fill="#ff4d6d" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle" dominant-baseline="middle"/>
       <!-- history mini chart -->
       <polyline id="angle-history" fill="none" stroke="#ff4d6d" stroke-width="1.5" opacity="0.7"/>
       <rect id="chart-bg" rx="3" ry="3" fill="rgba(0,0,0,0.5)" stroke="rgba(255,77,109,0.3)" stroke-width="0.8"/>
-      <text id="chart-title" fill="rgba(255,77,109,0.6)" font-family="monospace" font-size="9">角度歷程</text>
+      <text id="chart-title" fill="rgba(255,77,109,0.6)" font-family="monospace" font-size="9">動作軌跡紀錄</text>
       <text id="chart-max"   fill="rgba(255,255,255,0.35)" font-family="monospace" font-size="9" text-anchor="end"/>
       <text id="chart-min"   fill="rgba(255,255,255,0.35)" font-family="monospace" font-size="9" text-anchor="end"/>
     </svg>
@@ -204,44 +204,40 @@
   <aside class="panel">
     <div class="panel-section">
       <div class="section-tag">技術解析</div>
-      <div class="section-title">正手攻球<br>動作要領</div>
-      <div class="section-desc">無</div>
+      <div class="section-title">正手攻球<br>實戰要訣</div>
+      <div class="section-desc">掌握以下幾個重點，讓揮拍更加流暢有力：</div>
     </div>
     <div class="panel-section">
       <div class="section-tag">動作分段</div>
       <div class="phase-list" id="phase-list">
         <div class="phase-item active" data-t="0" data-end="0.25">
           <div class="phase-num">01</div>
-          <div class="phase-body"><div class="phase-name">預備姿勢</div><div class="phase-hint">無</div></div>
-          <div class="phase-time">0–25%</div>
+          <div class="phase-body"><div class="phase-name">穩健預備</div><div class="phase-hint">重心微降，身體微微向前傾(先直立站也沒關係)。</div></div>
         </div>
         <div class="phase-item" data-t="0.25" data-end="0.5">
           <div class="phase-num">02</div>
-          <div class="phase-body"><div class="phase-name">引拍後擺</div><div class="phase-hint">無</div></div>
-          <div class="phase-time">25–50%</div>
+          <div class="phase-body"><div class="phase-name">身體後擺</div><div class="phase-hint">身體往後旋轉約70~80度</div></div>
         </div>
         <div class="phase-item" data-t="0.5" data-end="0.75">
           <div class="phase-num">03</div>
-          <div class="phase-body"><div class="phase-name">揮拍觸球</div><div class="phase-hint">無</div></div>
-          <div class="phase-time">50–75%</div>
+          <div class="phase-body"><div class="phase-name">精準擊球</div><div class="phase-hint">等到球與肩膀平行才可以出手~</div></div>
         </div>
         <div class="phase-item" data-t="0.75" data-end="1">
           <div class="phase-num">04</div>
-          <div class="phase-body"><div class="phase-name">還原準備</div><div class="phase-hint">無</div></div>
-          <div class="phase-time">75–100%</div>
+          <div class="phase-body"><div class="phase-name">還原</div><div class="phase-hint">手揮動的幅度非常小 且需要揮到鼻子的前方</div></div>
         </div>
       </div>
     </div>
     <div class="panel-section">
       <div class="section-tag">動作要點</div>
       <div class="tip-list">
-        <div class="tip-item"><div class="tip-dot"></div><span>無</span></div>
+        <div class="tip-item"><div class="tip-dot"></div><span>可以想像自己抱著一顆大球旋轉</span></div>
       </div>
     </div>
     <div class="panel-section">
       <div class="section-tag">常見錯誤</div>
       <div>
-        <div class="mistake-item"><div class="mistake-icon">✕</div><span>無</span></div>
+        <div class="mistake-item"><div class="mistake-icon">✕</div><span>避免過度依賴手發力。</span></div>
       </div>
     </div>
   </aside>
@@ -857,14 +853,14 @@ init().catch(console.error);
 
 <button id="fab-mode">
   <span class="fab-icon">📷</span>
-  <span class="fab-label">偵測</span>
+  <span class="fab-label">啟動 AI</span>
 </button>
 
 <!-- 偵測模式 Overlay -->
 <div id="detect-overlay">
   <div class="det-topbar">
-    <button id="btn-back" class="det-btn">← 返回</button>
-    <button id="det-rec-btn" class="det-btn det-rec-btn">● 錄影</button>
+    <button id="btn-back" class="det-btn">← 回上一頁</button>
+    <button id="det-rec-btn" class="det-btn det-rec-btn">● 開始記錄</button>
     <span id="det-rec-timer" class="det-rec-timer">00:00</span>
     <div class="det-status">
       <span id="det-status-dot" class="det-dot"></span>
@@ -877,8 +873,8 @@ init().catch(console.error);
   <div class="det-pip-3d"><canvas id="pip-3d-canvas"></canvas></div>
   <div class="det-bottom">
     <div class="det-cards">
-      <div class="det-card" id="det-card-elbow"><div class="det-card-val" id="det-val-elbow">--°</div><div class="det-card-lbl">手肘</div></div>
-      <div class="det-card" id="det-card-shoulder"><div class="det-card-val" id="det-val-shoulder">--°</div><div class="det-card-lbl">肩膀</div></div>
+      <div class="det-card" id="det-card-elbow"><div class="det-card-val" id="det-val-elbow">--°</div><div class="det-card-lbl">手肘角度</div></div>
+      <div class="det-card" id="det-card-shoulder"><div class="det-card-val" id="det-val-shoulder">--°</div><div class="det-card-lbl">肩膀水平</div></div>
       <div class="det-card" id="det-card-knee"><div class="det-card-val" id="det-val-knee">--°</div><div class="det-card-lbl">膝蓋</div></div>
     </div>
     <div id="det-coach" class="det-coach">等待偵測姿勢...</div>
