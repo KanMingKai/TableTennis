@@ -918,7 +918,6 @@ init().catch(console.error);
 <!-- Firebase compat SDK (no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script>
   firebase.initializeApp({
     apiKey: "AIzaSyDuErikHul-5eREA87ea_va1XgjgmXB34M",
@@ -929,7 +928,8 @@ init().catch(console.error);
     appId: "1:816767387756:web:101281d898825b4d347049"
   });
   const _db = firebase.firestore();
-  const _storage = firebase.storage();
+  const _CLOUDINARY_CLOUD = 'dndyiurdr';
+  const _CLOUDINARY_PRESET = 'tabletennis_upload';
 </script>
 
 <script>
@@ -1248,38 +1248,41 @@ init().catch(console.error);
     btn.disabled = true;
     status.textContent = '上傳中… 0%';
 
-    const filename = 'videos/' + Date.now() + '.' + detLastExt;
-    const ref  = _storage.ref(filename);
-    const task = ref.put(detLastBlob, { contentType: detLastBlob.type });
+    const formData = new FormData();
+    formData.append('file', detLastBlob, 'video.' + detLastExt);
+    formData.append('upload_preset', _CLOUDINARY_PRESET);
 
-    task.on('state_changed',
-      snap => {
-        const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
-        status.textContent = '上傳中… ' + pct + '%';
-      },
-      err => {
-        status.textContent = '✗ 上傳失敗：' + err.message;
-        btn.disabled = false;
-      },
-      async () => {
-        try {
-          const url = await task.snapshot.ref.getDownloadURL();
-          const doc = await _db.collection('videos').add({
-            title,
-            url,
-            ext: detLastExt,
-            size: detLastBlob.size,
-            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          const base     = location.href.replace(/[^/]*$/, '');
-          const videoUrl = base + 'platform/video.html?id=' + doc.id;
-          status.innerHTML = '✓ 發布成功！<br><a href="' + videoUrl + '" target="_blank" style="color:#10b981;text-decoration:underline;">查看影片 →</a>';
-        } catch(e) {
-          status.textContent = '✗ 儲存失敗：' + e.message;
-        }
-        btn.disabled = false;
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        status.textContent = '上傳中… ' + Math.round(e.loaded / e.total * 100) + '%';
       }
-    );
+    };
+    xhr.onload = async () => {
+      if (xhr.status !== 200) {
+        status.textContent = '✗ 上傳失敗（' + xhr.status + '）';
+        btn.disabled = false; return;
+      }
+      try {
+        const result = JSON.parse(xhr.responseText);
+        const doc = await _db.collection('videos').add({
+          title,
+          url: result.secure_url,
+          ext: detLastExt,
+          size: detLastBlob.size,
+          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        const base     = location.href.replace(/[^/]*$/, '');
+        const videoUrl = base + 'platform/video.html?id=' + doc.id;
+        status.innerHTML = '✓ 發布成功！<br><a href="' + videoUrl + '" target="_blank" style="color:#10b981;text-decoration:underline;">查看影片 →</a>';
+      } catch(e) {
+        status.textContent = '✗ 儲存失敗：' + e.message;
+      }
+      btn.disabled = false;
+    };
+    xhr.onerror = () => { status.textContent = '✗ 網路錯誤，請重試'; btn.disabled = false; };
+    xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + _CLOUDINARY_CLOUD + '/video/upload');
+    xhr.send(formData);
   });
 })();
 </script>

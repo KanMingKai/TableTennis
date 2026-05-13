@@ -9,5 +9,4 @@ if (!firebase.apps.length) {
     appId: "1:816767387756:web:101281d898825b4d347049"
   });
 }
-const db      = firebase.firestore();
-const storage = firebase.storage();
+const db = firebase.firestore();
