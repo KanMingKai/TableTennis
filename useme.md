@@ -20,7 +20,6 @@ tabletennis-forehand.html   → 練習 App（教練模式 + 偵測模式 + 錄�
 platform/index.html         → 社群平台首頁（列出所有影片）
 platform/video.html         → 單一影片頁（DPlayer 播放 + 彈幕）
 platform/firebase-config.js → Firebase 設定（Firestore 連線）
-cors.json                   → Firebase Storage CORS 設定（目前已不使用）
 ```
 
 ---
