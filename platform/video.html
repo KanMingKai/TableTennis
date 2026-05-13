@@ -135,8 +135,8 @@
   const contentEl = document.getElementById('content');
   contentEl.style.display = 'flex';
 
-  document.getElementById('page-title').textContent = videoData.title;
-  document.getElementById('vid-title').textContent   = videoData.title;
+  document.title = videoData.title + ' — 乒乓球揮拍';
+  document.getElementById('vid-title').textContent = videoData.title;
   const dateStr = videoData.uploadedAt
     ? new Date(videoData.uploadedAt.toDate()).toLocaleString('zh-TW')
     : '—';
