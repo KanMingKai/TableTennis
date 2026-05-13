@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>乒乓球揮拍練習</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0f;
+    color: #e2e8f0;
+    font-family: "Noto Sans TC", system-ui, sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  }
+
+  /* ── 頂部 Logo 區 ── */
+  .hero {
+    width: 100%;
+    max-width: 480px;
+    padding: 48px 24px 32px;
+    text-align: center;
+  }
+  .hero-icon { font-size: 56px; line-height: 1; margin-bottom: 14px; }
+  .hero-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    background: linear-gradient(135deg, #00f5ff, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .hero-sub { font-size: 13px; color: #64748b; letter-spacing: .04em; }
+
+  /* ── 卡片區 ── */
+  .cards {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 20px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 20px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid transparent;
+    transition: transform .15s, border-color .15s, background .15s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .15s;
+    border-radius: inherit;
+  }
+  .card:active { transform: scale(0.97); }
+
+  /* 練習卡片 */
+  .card-learn {
+    background: linear-gradient(135deg, rgba(0,245,255,.08), rgba(0,245,255,.03));
+    border-color: rgba(0,245,255,.2);
+  }
+  .card-learn::before { background: rgba(0,245,255,.06); }
+  .card-learn:hover { border-color: rgba(0,245,255,.45); }
+  .card-learn:hover::before { opacity: 1; }
+  .card-learn .card-icon-wrap { background: rgba(0,245,255,.12); }
+  .card-learn .card-title { color: #00f5ff; }
+  .card-learn .card-arrow { color: rgba(0,245,255,.6); }
+
+  /* 社群卡片 */
+  .card-community {
+    background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(16,185,129,.03));
+    border-color: rgba(16,185,129,.2);
+  }
+  .card-community::before { background: rgba(16,185,129,.06); }
+  .card-community:hover { border-color: rgba(16,185,129,.45); }
+  .card-community:hover::before { opacity: 1; }
+  .card-community .card-icon-wrap { background: rgba(16,185,129,.12); }
+  .card-community .card-title { color: #10b981; }
+  .card-community .card-arrow { color: rgba(16,185,129,.6); }
+
+  .card-icon-wrap {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .card-body { flex: 1; }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+  .card-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  .card-arrow { font-size: 22px; flex-shrink: 0; }
+
+  /* ── 底部 ── */
+  footer {
+    margin-top: auto;
+    padding: 16px;
+    font-size: 11px;
+    color: #334155;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">🏓</div>
+  <div class="hero-title">乒乓球揮拍練習</div>
+  <div class="hero-sub">AI 姿勢偵測 · 揮拍錄影 · 社群分享</div>
+</div>
+
+<div class="cards">
+
+  <a class="card card-learn" href="tabletennis-forehand.html">
+    <div class="card-icon-wrap">🎯</div>
+    <div class="card-body">
+      <div class="card-title">開始練習</div>
+      <div class="card-desc">AI 即時偵測姿勢、錄製揮拍動作，並對照 3D 標準模型</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+  <a class="card card-community" href="platform/index.html">
+    <div class="card-icon-wrap">🎬</div>
+    <div class="card-body">
+      <div class="card-title">瀏覽社群</div>
+      <div class="card-desc">觀看大家的揮拍影片、發送彈幕給予建議</div>
+    </div>
+    <div class="card-arrow">›</div>
+  </a>
+
+</div>
+
+<footer>乒乓球揮拍練習平台</footer>
+
+</body>
+</html>
