@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上傳揮拍影片</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cyan: #00f5ff; --cyan-dim: rgba(0,245,255,.12);
+    --bg: #0a0a0f; --card: #111827;
+    --border: rgba(0,245,255,.12); --gray: #64748b; --text: #e2e8f0;
+  }
+  body { background: var(--bg); color: var(--text); font-family: "Noto Sans TC", system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 50px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,.75); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
+  .nav-logo { font-size: 15px; font-weight: 700; color: var(--cyan); text-decoration: none; flex: 1; letter-spacing: .04em; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link { font-size: 12px; color: #94a3b8; text-decoration: none; padding: 5px 10px; border-radius: 6px; transition: all .15s; white-space: nowrap; }
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,.07); }
+
+  .page { flex: 1; max-width: 520px; width: 100%; margin: 0 auto; padding: 24px 16px 56px; }
+  .page-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+
+  .step { display: none; flex-direction: column; gap: 16px; }
+  .step.active { display: flex; }
+
+  /* ── Step 1: Source ── */
+  .source-btn {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--text); font-size: 15px; font-weight: 600;
+    cursor: pointer; text-align: left;
+    transition: all .15s; -webkit-tap-highlight-color: transparent;
+  }
+  .source-btn:active { transform: scale(0.98); }
+  @media (hover: hover) { .source-btn:hover { border-color: rgba(0,245,255,.4); background: #151f30; } }
+  .source-btn .s-icon { font-size: 30px; flex-shrink: 0; }
+  .source-btn .s-desc { font-size: 12px; color: var(--gray); font-weight: 400; margin-top: 3px; }
+
+  /* ── Step 2: Camera ── */
+  .cam-wrap { position: relative; width: 100%; aspect-ratio: 9/16; max-height: 62vh; background: #000; border-radius: 12px; overflow: hidden; }
+  #cam-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .rec-badge { position: absolute; top: 12px; left: 12px; display: none; align-items: center; gap: 6px; background: rgba(0,0,0,.65); padding: 4px 10px; border-radius: 20px; font-size: 13px; }
+  .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.2} }
+  .cam-row { display: flex; gap: 10px; }
+
+  /* ── Step 3: Trim ── */
+  .video-frame { width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
+  .video-frame video { width: 100%; display: block; max-height: 54vh; object-fit: contain; }
+
+  /* timeline */
+  .tl-outer { padding: 6px 0 2px; }
+  .tl-wrap {
+    position: relative; height: 48px;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  .tl-bg {
+    position: absolute; left: 12px; right: 12px;
+    top: 50%; transform: translateY(-50%);
+    height: 4px; background: rgba(255,255,255,.15); border-radius: 2px;
+  }
+  .tl-range {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 4px; background: var(--cyan); border-radius: 2px;
+    pointer-events: none;
+  }
+  .tl-handle {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--cyan); border: 2.5px solid #fff;
+    cursor: grab; touch-action: none; z-index: 2;
+    box-shadow: 0 0 0 4px rgba(0,245,255,.2);
+  }
+  .tl-handle:active { cursor: grabbing; }
+  .tl-labels { display: flex; justify-content: space-between; padding: 0 2px; font-size: 11px; color: var(--gray); }
+  .tl-center { text-align: center; }
+  .tl-dur { color: var(--cyan); font-weight: 700; }
+
+  /* ── Buttons ── */
+  .btn-primary { width: 100%; padding: 13px; border-radius: 10px; border: none; background: var(--cyan); color: #000; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .15s; -webkit-tap-highlight-color: transparent; }
+  .btn-primary:active { opacity: .8; }
+  .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+  .btn-secondary { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: transparent; color: #94a3b8; font-size: 14px; cursor: pointer; transition: all .15s; -webkit-tap-highlight-color: transparent; }
+  .btn-secondary:active { background: rgba(255,255,255,.06); }
+  .btn-sm { padding: 8px 14px; border-radius: 7px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .btn-row { display: flex; gap: 10px; }
+
+  /* ── Upload progress ── */
+  .prog-wrap { background: rgba(255,255,255,.08); border-radius: 6px; height: 8px; overflow: hidden; }
+  .prog-bar { height: 100%; background: var(--cyan); border-radius: 6px; transition: width .2s; }
+  .prog-text { font-size: 13px; color: var(--gray); text-align: center; margin-top: 6px; }
+
+  /* ── Success ── */
+  .success-box { text-align: center; padding: 40px 0; }
+  .success-box .s-big { font-size: 52px; margin-bottom: 14px; }
+  .success-box h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .success-box p { font-size: 14px; color: var(--gray); margin-bottom: 28px; }
+
+  /* ── Processing overlay ── */
+  .proc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.78); backdrop-filter: blur(4px); z-index: 50; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-size: 15px; }
+  .proc-overlay.show { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 3px solid rgba(0,245,255,.2); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* input */
+  input[type="text"] { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(0,245,255,.25); background: rgba(255,255,255,.06); color: var(--text); font-size: 15px; outline: none; }
+  input[type="text"]:focus { border-color: rgba(0,245,255,.55); }
+  input[type="text"]::placeholder { color: var(--gray); }
+</style>
+</head>
+<body>
+<header>
+  <a class="nav-logo" href="../index.html">🏓 揮拍練習</a>
+  <nav class="nav-links">
+    <a class="nav-link" href="../index.html">← 首頁</a>
+    <a class="nav-link" href="index.html">社群</a>
+  </nav>
+</header>
+
+<div class="page">
+
+  <!-- Step 1: Choose source -->
+  <div class="step active" id="step-source">
+    <div class="page-title">上傳揮拍影片</div>
+    <button class="source-btn" id="btn-open-cam">
+      <span class="s-icon">📷</span>
+      <div>
+        <div>開啟相機錄製</div>
+        <div class="s-desc">用手機鏡頭即時錄製揮拍動作</div>
+      </div>
+    </button>
+    <button class="source-btn" id="btn-open-file">
+      <span class="s-icon">🎞️</span>
+      <div>
+        <div>從相簿選擇影片</div>
+        <div class="s-desc">選取已拍好的影片進行剪輯上傳</div>
+      </div>
+    </button>
+    <input type="file" id="file-input" accept="video/*" style="display:none">
+  </div>
+
+  <!-- Step 2: Camera recording -->
+  <div class="step" id="step-cam">
+    <div class="cam-wrap">
+      <video id="cam-preview" autoplay muted playsinline></video>
+      <div class="rec-badge" id="rec-badge">
+        <div class="rec-dot"></div>
+        <span id="rec-timer">0:00</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-sm" id="btn-flip">🔄 翻轉</button>
+    </div>
+    <button class="btn-primary" id="btn-start-rec">⏺ 開始錄製</button>
+    <button class="btn-primary" id="btn-stop-rec" style="display:none;background:#ef4444;">⏹ 停止錄製</button>
+    <button class="btn-secondary" id="btn-cancel-cam">取消</button>
+  </div>
+
+  <!-- Step 3: Trim -->
+  <div class="step" id="step-trim">
+    <div class="video-frame"><video id="trim-video" playsinline preload="metadata"></video></div>
+
+    <div class="btn-row" style="align-items:center;">
+      <button class="btn-sm" id="btn-preview-play">▶ 預覽片段</button>
+      <span style="font-size:12px;color:var(--gray);">拖拉兩端選取，最多 15 秒</span>
+    </div>
+
+    <div class="tl-outer">
+      <div class="tl-wrap" id="tl-wrap">
+        <div class="tl-bg"></div>
+        <div class="tl-range" id="tl-range"></div>
+        <div class="tl-handle" id="tl-s"></div>
+        <div class="tl-handle" id="tl-e"></div>
+      </div>
+      <div class="tl-labels">
+        <span id="lbl-start">0:00</span>
+        <span class="tl-center">已選 <span class="tl-dur" id="lbl-dur">0.0</span> 秒</span>
+        <span id="lbl-end">0:00</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-confirm">確認剪輯 →</button>
+    <button class="btn-secondary" id="btn-retake">重新選擇</button>
+  </div>
+
+  <!-- Step 4: Upload -->
+  <div class="step" id="step-upload">
+    <div class="video-frame"><video id="preview-video" controls playsinline></video></div>
+    <input type="text" id="title-input" placeholder="輸入影片標題（必填）" maxlength="40">
+    <button class="btn-primary" id="btn-upload">上傳到社群</button>
+    <div id="prog-section" style="display:none;">
+      <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+      <div class="prog-text" id="prog-text">準備中…</div>
+    </div>
+  </div>
+
+  <!-- Step 5: Success -->
+  <div class="step" id="step-success">
+    <div class="success-box">
+      <div class="s-big">🎉</div>
+      <h3>上傳成功！</h3>
+      <p>你的揮拍影片已發布到社群</p>
+      <a href="index.html" class="btn-primary" style="display:block;text-decoration:none;text-align:center;">前往社群觀看</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Processing overlay -->
+<div class="proc-overlay" id="proc-overlay">
+  <div class="spinner"></div>
+  <div>剪輯中，請稍候…</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const CLOUD  = 'dndyiurdr';
+const PRESET = 'tabletennis_upload';
+const MAX_S  = 15;
+
+// ── DOM ──────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const STEPS = ['source','cam','trim','upload','success'];
+function showStep(name) {
+  STEPS.forEach(n => $('step-' + n).classList.toggle('active', n === name));
+}
+
+// ── Camera state ─────────────────────────────────────────
+let camStream = null, facing = 'environment';
+let mediaRec  = null, recChunks = [], recTimerId = null, recSecs = 0;
+
+$('btn-open-cam').addEventListener('click', async () => {
+  await startCam();
+  showStep('cam');
+});
+
+$('btn-open-file').addEventListener('click', () => $('file-input').click());
+
+$('file-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) enterTrim(URL.createObjectURL(f));
+});
+
+async function startCam(dir = facing) {
+  if (camStream) camStream.getTracks().forEach(t => t.stop());
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: dir } }, audio: true
+    });
+    $('cam-preview').srcObject = camStream;
+  } catch(e) {
+    alert('無法開啟相機：' + e.message);
+    showStep('source');
+  }
+}
+
+$('btn-flip').addEventListener('click', () => {
+  facing = facing === 'environment' ? 'user' : 'environment';
+  startCam(facing);
+});
+
+$('btn-cancel-cam').addEventListener('click', () => { stopCam(); showStep('source'); });
+
+$('btn-start-rec').addEventListener('click', () => {
+  if (!camStream) return;
+  const mime = ['video/webm;codecs=vp8,opus','video/webm','video/mp4']
+    .find(t => MediaRecorder.isTypeSupported(t)) || '';
+  recChunks = [];
+  mediaRec  = new MediaRecorder(camStream, mime ? { mimeType: mime } : {});
+  mediaRec.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
+  mediaRec.onstop = () => {
+    const blob = new Blob(recChunks, { type: mediaRec.mimeType });
+    stopCam();
+    enterTrim(URL.createObjectURL(blob));
+  };
+  mediaRec.start(200);
+
+  $('btn-start-rec').style.display  = 'none';
+  $('btn-stop-rec').style.display   = '';
+  $('btn-cancel-cam').style.display = 'none';
+  $('rec-badge').style.display      = 'flex';
+
+  recSecs = 0; $('rec-timer').textContent = '0:00';
+  recTimerId = setInterval(() => {
+    recSecs++;
+    $('rec-timer').textContent = Math.floor(recSecs/60) + ':' + String(recSecs%60).padStart(2,'0');
+  }, 1000);
+});
+
+$('btn-stop-rec').addEventListener('click', () => {
+  if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop();
+  clearInterval(recTimerId);
+  $('btn-stop-rec').style.display   = 'none';
+  $('btn-start-rec').style.display  = '';
+  $('btn-cancel-cam').style.display = '';
+  $('rec-badge').style.display      = 'none';
+});
+
+function stopCam() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  clearInterval(recTimerId);
+}
+
+// ── Trim state ───────────────────────────────────────────
+const trimVid = $('trim-video');
+const tlWrap  = $('tl-wrap');
+let vDur = 0, sRatio = 0, eRatio = 1;
+let dragging = null;
+
+function enterTrim(url) {
+  $('file-input').value = '';
+  trimVid.src = url;
+  trimVid.onloadedmetadata = () => {
+    vDur   = trimVid.duration;
+    sRatio = 0;
+    eRatio = Math.min(1, MAX_S / vDur);
+    updateTL();
+    showStep('trim');
+  };
+}
+
+function updateTL() {
+  const w  = tlWrap.getBoundingClientRect().width || 320;
+  const tw = w - 24; // 12px padding each side
+  const sp = 12 + sRatio * tw;
+  const ep = 12 + eRatio * tw;
+  $('tl-s').style.left    = sp + 'px';
+  $('tl-e').style.left    = ep + 'px';
+  $('tl-range').style.left  = sp + 'px';
+  $('tl-range').style.width = (ep - sp) + 'px';
+  const sel = (eRatio - sRatio) * vDur;
+  $('lbl-dur').textContent   = sel.toFixed(1);
+  $('lbl-start').textContent = fmt(sRatio * vDur);
+  $('lbl-end').textContent   = fmt(eRatio * vDur);
+}
+
+function toRatio(cx) {
+  const r   = tlWrap.getBoundingClientRect();
+  const tw  = r.width - 24;
+  return Math.max(0, Math.min(1, (cx - r.left - 12) / tw));
+}
+
+function onDrag(cx) {
+  const r = toRatio(cx);
+  if (dragging === 's') {
+    let v = Math.min(r, eRatio - 0.3 / vDur);
+    if ((eRatio - v) * vDur > MAX_S) v = eRatio - MAX_S / vDur;
+    sRatio = Math.max(0, v);
+    trimVid.currentTime = sRatio * vDur;
+  } else {
+    let v = Math.max(r, sRatio + 0.3 / vDur);
+    if ((v - sRatio) * vDur > MAX_S) v = sRatio + MAX_S / vDur;
+    eRatio = Math.min(1, v);
+    trimVid.currentTime = eRatio * vDur;
+  }
+  updateTL();
+}
+
+$('tl-s').addEventListener('pointerdown', e => { dragging = 's'; e.preventDefault(); $('tl-s').setPointerCapture(e.pointerId); });
+$('tl-e').addEventListener('pointerdown', e => { dragging = 'e'; e.preventDefault(); $('tl-e').setPointerCapture(e.pointerId); });
+document.addEventListener('pointermove', e => { if (dragging) onDrag(e.clientX); });
+document.addEventListener('pointerup',   () => { dragging = null; });
+
+let previewInterval = null;
+$('btn-preview-play').addEventListener('click', () => {
+  clearInterval(previewInterval);
+  if (!trimVid.paused) {
+    trimVid.pause();
+    $('btn-preview-play').textContent = '▶ 預覽片段';
+    return;
+  }
+  trimVid.currentTime = sRatio * vDur;
+  trimVid.play();
+  $('btn-preview-play').textContent = '⏸ 暫停';
+  const endT = eRatio * vDur;
+  previewInterval = setInterval(() => {
+    if (trimVid.currentTime >= endT) {
+      trimVid.pause();
+      $('btn-preview-play').textContent = '▶ 預覽片段';
+      clearInterval(previewInterval);
+    }
+  }, 80);
+});
+
+$('btn-retake').addEventListener('click', () => {
+  trimVid.pause(); clearInterval(previewInterval);
+  showStep('source');
+});
+
+$('btn-confirm').addEventListener('click', async () => {
+  trimVid.pause(); clearInterval(previewInterval);
+  $('btn-preview-play').textContent = '▶ 預覽片段';
+  $('proc-overlay').classList.add('show');
+  try {
+    trimmedBlob = await extractClip(trimVid, sRatio * vDur, eRatio * vDur);
+    $('proc-overlay').classList.remove('show');
+    enterUpload();
+  } catch(e) {
+    $('proc-overlay').classList.remove('show');
+    alert('剪輯失敗：' + e.message);
+  }
+});
+
+// ── Canvas re-recording ──────────────────────────────────
+let trimmedBlob = null;
+let audioCtx = null, audioDest = null;
+
+async function extractClip(vid, t0, t1) {
+  return new Promise((resolve, reject) => {
+    const cvs = document.createElement('canvas');
+    cvs.width  = vid.videoWidth  || 640;
+    cvs.height = vid.videoHeight || 480;
+    const ctx  = cvs.getContext('2d');
+
+    let stream;
+    try {
+      const vidStream = cvs.captureStream(30);
+      if (!audioCtx) {
+        audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+        const src = audioCtx.createMediaElementSource(vid);
+        audioDest = audioCtx.createMediaStreamDestination();
+        src.connect(audioDest);
+        src.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      stream = new MediaStream([
+        ...vidStream.getVideoTracks(),
+        ...audioDest.stream.getAudioTracks(),
+      ]);
+    } catch(_) {
+      stream = cvs.captureStream(30);
+    }
+
+    const mime = ['video/webm;codecs=vp8,opus','video/webm','video/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const rec    = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    rec.onstop  = () => resolve(new Blob(chunks, { type: rec.mimeType || 'video/webm' }));
+    rec.onerror = reject;
+
+    vid.currentTime = t0;
+    vid.onseeked = () => {
+      vid.onseeked = null;
+      rec.start(100);
+      vid.play();
+      let done = false;
+      (function draw() {
+        if (done) return;
+        if (vid.currentTime >= t1 - 0.04) {
+          done = true; vid.pause(); rec.stop(); return;
+        }
+        ctx.drawImage(vid, 0, 0, cvs.width, cvs.height);
+        requestAnimationFrame(draw);
+      })();
+    };
+  });
+}
+
+// ── Upload ───────────────────────────────────────────────
+function enterUpload() {
+  $('preview-video').src = URL.createObjectURL(trimmedBlob);
+  $('title-input').value = '';
+  $('btn-upload').disabled = false;
+  $('prog-section').style.display = 'none';
+  showStep('upload');
+}
+
+$('btn-upload').addEventListener('click', async () => {
+  const title = $('title-input').value.trim();
+  if (!title) { alert('請輸入影片標題'); return; }
+
+  $('btn-upload').disabled = true;
+  $('prog-section').style.display = '';
+  $('prog-bar').style.width = '0%';
+  $('prog-text').textContent = '準備中…';
+
+  const ext = trimmedBlob.type.includes('mp4') ? 'mp4' : 'webm';
+  const fd  = new FormData();
+  fd.append('file',          trimmedBlob, 'clip.' + ext);
+  fd.append('upload_preset', PRESET);
+
+  const xhr = new XMLHttpRequest();
+  xhr.upload.onprogress = e => {
+    if (!e.lengthComputable) return;
+    const p = Math.round(e.loaded / e.total * 100);
+    $('prog-bar').style.width   = p + '%';
+    $('prog-text').textContent  = '上傳中… ' + p + '%';
+  };
+  xhr.onload = async () => {
+    if (xhr.status !== 200) {
+      $('btn-upload').disabled = false;
+      alert('上傳失敗：HTTP ' + xhr.status);
+      return;
+    }
+    try {
+      const res = JSON.parse(xhr.responseText);
+      await db.collection('videos').add({
+        title, url: res.secure_url, ext,
+        size: trimmedBlob.size,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      showStep('success');
+    } catch(e) {
+      $('btn-upload').disabled = false;
+      alert('儲存失敗：' + e.message);
+    }
+  };
+  xhr.onerror = () => { $('btn-upload').disabled = false; alert('網路錯誤，請稍後再試'); };
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUD + '/video/upload');
+  xhr.send(fd);
+});
+
+function fmt(s) {
+  return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
+}
+</script>
+</body>
+</html>

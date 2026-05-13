@@ -73,6 +73,19 @@
   .loading { text-align: center; color: #475569; padding: 60px 0; }
   .spinner { width: 32px; height: 32px; border: 3px solid rgba(0,245,255,.15); border-top-color: #00f5ff; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .fab-upload {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #00f5ff; color: #000;
+    font-size: 26px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none; z-index: 20;
+    box-shadow: 0 4px 18px rgba(0,245,255,.45);
+    transition: transform .15s, box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fab-upload:active { transform: scale(0.91); box-shadow: 0 2px 10px rgba(0,245,255,.3); }
 </style>
 </head>
 <body>
@@ -89,6 +102,8 @@
   <div id="status" class="loading"><div class="spinner"></div>載入中…</div>
   <div class="grid" id="grid"></div>
 </main>
+
+<a href="upload.html" class="fab-upload" title="上傳影片">＋</a>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
