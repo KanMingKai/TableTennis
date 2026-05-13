@@ -14,12 +14,12 @@
     overflow: hidden; height: 100vh; height: 100dvh;
   }
 
-  /* ── Header (overlays reels) ── */
+  /* ── Header ── */
   header {
     position: fixed; top: 0; left: 0; right: 0;
     height: 50px; z-index: 20;
     display: flex; align-items: center; gap: 8px; padding: 0 14px;
-    background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, transparent 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,.65), transparent);
     pointer-events: none;
   }
   header > * { pointer-events: auto; }
@@ -28,7 +28,6 @@
   .nav-link { font-size: 12px; color: #e2e8f0; text-decoration: none; padding: 5px 10px; border-radius: 6px; transition: background .15s; white-space: nowrap; }
   .nav-link:hover { background: rgba(255,255,255,.15); }
   .nav-link.upload { color: #00f5ff; border: 1px solid rgba(0,245,255,.45); }
-  .nav-link.upload:hover { background: rgba(0,245,255,.1); }
 
   /* ── Reels container ── */
   .reels {
@@ -41,14 +40,12 @@
   }
   .reels::-webkit-scrollbar { display: none; }
 
-  /* ── Single reel item ── */
+  /* ── Single reel ── */
   .reel-item {
     position: relative;
     width: 100%; height: 100vh; height: 100dvh;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    overflow: hidden; background: #000;
-    cursor: pointer;
+    scroll-snap-align: start; scroll-snap-stop: always;
+    overflow: hidden; background: #000; cursor: pointer;
   }
 
   .reel-video {
@@ -57,22 +54,35 @@
     object-fit: contain;
   }
 
-  /* dual gradient: top for header, bottom for info */
+  /* dual gradient */
   .reel-gradient {
     position: absolute; inset: 0; pointer-events: none;
     background:
       linear-gradient(to bottom, rgba(0,0,0,.55) 0%, transparent 18%),
-      linear-gradient(to top,    rgba(0,0,0,.8)  0%, transparent 50%);
+      linear-gradient(to top,    rgba(0,0,0,.85) 0%, transparent 55%);
   }
 
-  /* bottom info + actions */
+  /* danmaku overlay */
+  .dm-overlay {
+    position: absolute; top: 0; left: 0; right: 0;
+    bottom: 110px;
+    pointer-events: none; overflow: hidden;
+  }
+  .dm-item {
+    position: absolute; left: 100%;
+    white-space: nowrap; font-size: 18px; font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.7);
+    line-height: 1.2; pointer-events: none;
+  }
+
+  /* info + actions row */
   .reel-bottom {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 16px 40px;
+    padding: 16px 16px 118px;
     display: flex; align-items: flex-end; gap: 14px;
   }
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .reel-bottom { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+    .reel-bottom { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
   }
 
   .reel-info { flex: 1; min-width: 0; }
@@ -90,14 +100,42 @@
     border: none; background: rgba(0,0,0,.55);
     color: #fff; font-size: 20px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     transition: background .12s, transform .12s;
     -webkit-tap-highlight-color: transparent;
-    text-decoration: none;
   }
   .action-btn:active { background: rgba(255,255,255,.2); transform: scale(0.92); }
 
-  /* tap play/pause ripple */
+  /* danmaku input bar */
+  .dm-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 12px 16px;
+    background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 100%);
+  }
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .dm-bar { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  }
+  .dm-input {
+    flex: 1; padding: 9px 14px; border-radius: 22px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(0,0,0,.45);
+    color: #fff; font-size: 14px; outline: none;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dm-input::placeholder { color: rgba(255,255,255,.38); }
+  .dm-input:focus { border-color: rgba(0,245,255,.5); }
+  .dm-send {
+    padding: 9px 16px; border-radius: 22px;
+    border: 1px solid rgba(0,245,255,.45);
+    background: rgba(0,245,255,.15); color: #00f5ff;
+    font-size: 13px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dm-send:active { background: rgba(0,245,255,.35); }
+
+  /* tap hint */
   .tap-hint {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 64px; height: 64px; border-radius: 50%;
@@ -108,7 +146,7 @@
   }
   .tap-hint.show { opacity: 1; }
 
-  /* ── Loading / empty ── */
+  /* loading / empty */
   .reel-loading, .reel-empty {
     height: 100vh; height: 100dvh;
     display: flex; flex-direction: column;
@@ -144,7 +182,58 @@
 const DEL_PASSWORD = '0000';
 let muteState = true;
 
-// ── Load videos ─────────────────────────────────────────
+// ── Danmaku engine ───────────────────────────────────────
+const LANES   = 10;
+const laneEnd = new Array(LANES).fill(0);
+const dmCache = new Map(); // videoId → [{time,text,color}]
+const dmShown = new Map(); // videoId → Set<idx>
+
+function getFreeLane() {
+  const now = performance.now();
+  let i = laneEnd.findIndex(t => t <= now);
+  if (i === -1) i = Math.floor(Math.random() * LANES);
+  return i;
+}
+
+function flyText(overlay, text, color) {
+  const span = document.createElement('span');
+  span.className   = 'dm-item';
+  span.textContent = text;
+  span.style.color = color || '#fff';
+  overlay.appendChild(span);
+
+  const lane  = getFreeLane();
+  const laneH = overlay.offsetHeight / LANES;
+  span.style.top = (lane * laneH + (laneH - 22) / 2) + 'px';
+
+  const W   = overlay.offsetWidth;
+  const dur = 7000 + Math.random() * 2000;
+  laneEnd[lane] = performance.now() + dur;
+
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = (now - t0) / dur;
+    if (p >= 1) { span.remove(); return; }
+    span.style.transform = 'translateX(' + (-(W + span.offsetWidth) * p) + 'px)';
+    requestAnimationFrame(tick);
+  })(performance.now());
+}
+
+async function loadDanmaku(videoId) {
+  if (dmCache.has(videoId)) return dmCache.get(videoId);
+  try {
+    const snap = await db.collection('danmaku').doc(videoId)
+      .collection('comments').orderBy('time').get();
+    const list = snap.docs.map(d => d.data());
+    dmCache.set(videoId, list);
+    return list;
+  } catch(_) {
+    dmCache.set(videoId, []);
+    return [];
+  }
+}
+
+// ── Load videos ──────────────────────────────────────────
 (async () => {
   const reelsEl = document.getElementById('reels');
   try {
@@ -166,9 +255,10 @@ let muteState = true;
   }
 })();
 
-// ── Build one reel item ─────────────────────────────────
+// ── Build one reel item ──────────────────────────────────
 function makeReel(doc) {
   const d    = doc.data();
+  const docId = doc.id;
   const date = d.uploadedAt
     ? new Date(d.uploadedAt.toDate()).toLocaleDateString('zh-TW') : '—';
 
@@ -177,36 +267,39 @@ function makeReel(doc) {
 
   // video
   const vid = document.createElement('video');
-  vid.className   = 'reel-video';
-  vid.src         = d.url;
-  vid.muted       = true;
-  vid.loop        = true;
-  vid.preload     = 'metadata';
+  vid.className = 'reel-video';
+  vid.src       = d.url;
+  vid.muted     = true;
+  vid.loop      = true;
+  vid.preload   = 'metadata';
   vid.setAttribute('playsinline', '');
 
-  // gradients overlay
+  // gradients
   const grad = document.createElement('div');
   grad.className = 'reel-gradient';
 
-  // tap hint (play/pause visual)
+  // danmaku overlay
+  const dmOv = document.createElement('div');
+  dmOv.className = 'dm-overlay';
+
+  // tap hint
   const hint = document.createElement('div');
   hint.className = 'tap-hint';
   hint.textContent = '⏸';
 
-  // bottom bar
+  // info + action row
   const bottom = document.createElement('div');
   bottom.className = 'reel-bottom';
 
   const info = document.createElement('div');
   info.className = 'reel-info';
   info.innerHTML =
-    '<div class="reel-title">' + escHtml(d.title) + '</div>' +
+    '<div class="reel-title">' + escHtml(d.title || '揮拍練習') + '</div>' +
     '<div class="reel-meta">'  + date + '</div>';
 
   const actions = document.createElement('div');
   actions.className = 'reel-actions';
 
-  // mute btn
   const muteBtn = document.createElement('button');
   muteBtn.className = 'action-btn mute-btn';
   muteBtn.title = '靜音切換';
@@ -218,15 +311,6 @@ function makeReel(doc) {
     syncMuteBtns();
   });
 
-  // comment / danmaku link
-  const cmtBtn = document.createElement('a');
-  cmtBtn.className = 'action-btn';
-  cmtBtn.href = 'video.html?id=' + doc.id;
-  cmtBtn.title = '彈幕留言';
-  cmtBtn.textContent = '💬';
-  cmtBtn.addEventListener('click', e => e.stopPropagation());
-
-  // delete btn
   const delBtn = document.createElement('button');
   delBtn.className = 'action-btn';
   delBtn.title = '刪除影片';
@@ -236,9 +320,9 @@ function makeReel(doc) {
     const pwd = prompt('請輸入刪除密碼：');
     if (pwd === null) return;
     if (pwd !== DEL_PASSWORD) { alert('密碼錯誤'); return; }
-    if (!confirm('確定刪除「' + d.title + '」？\n（無法復原）')) return;
+    if (!confirm('確定刪除？（無法復原）')) return;
     try {
-      await db.collection('videos').doc(doc.id).delete();
+      await db.collection('videos').doc(docId).delete();
       item.remove();
     } catch(err) {
       alert('刪除失敗：' + err.message);
@@ -246,33 +330,90 @@ function makeReel(doc) {
   });
 
   actions.appendChild(muteBtn);
-  actions.appendChild(cmtBtn);
   actions.appendChild(delBtn);
   bottom.appendChild(info);
   bottom.appendChild(actions);
 
-  // tap video → play / pause
+  // danmaku input bar
+  const dmBar = document.createElement('div');
+  dmBar.className = 'dm-bar';
+
+  const dmInput = document.createElement('input');
+  dmInput.className   = 'dm-input';
+  dmInput.type        = 'text';
+  dmInput.placeholder = '發送彈幕…';
+  dmInput.maxLength   = 50;
+
+  const dmSend = document.createElement('button');
+  dmSend.className   = 'dm-send';
+  dmSend.textContent = '發送';
+
+  dmBar.appendChild(dmInput);
+  dmBar.appendChild(dmSend);
+
+  // tap to play/pause
   item.addEventListener('click', e => {
-    if (e.target.closest('.action-btn, a')) return;
-    if (vid.paused) {
-      vid.play();
-      hint.textContent = '▶';
-    } else {
-      vid.pause();
-      hint.textContent = '⏸';
-    }
+    if (e.target.closest('.action-btn, .dm-bar')) return;
+    if (vid.paused) { vid.play(); hint.textContent = '▶'; }
+    else            { vid.pause(); hint.textContent = '⏸'; }
     hint.classList.add('show');
     setTimeout(() => hint.classList.remove('show'), 700);
   });
 
   item.appendChild(vid);
   item.appendChild(grad);
+  item.appendChild(dmOv);
   item.appendChild(hint);
   item.appendChild(bottom);
+  item.appendChild(dmBar);
+
+  // danmaku: send
+  async function sendDm() {
+    const text = dmInput.value.trim();
+    if (!text) return;
+    const time  = vid.currentTime;
+    const color = '#ffffff';
+    try {
+      await db.collection('danmaku').doc(docId)
+        .collection('comments').add({
+          text, color, time,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      dmInput.value = '';
+      flyText(dmOv, text, color);
+      const list = dmCache.get(docId) || [];
+      list.push({ text, color, time });
+      list.sort((a, b) => a.time - b.time);
+      dmCache.set(docId, list);
+    } catch(_) {}
+  }
+
+  dmSend.addEventListener('click',   e => { e.stopPropagation(); sendDm(); });
+  dmInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); sendDm(); } });
+  dmInput.addEventListener('click',   e => e.stopPropagation());
+
+  // danmaku: replay on timeupdate
+  dmShown.set(docId, new Set());
+  vid.addEventListener('timeupdate', () => {
+    const list = dmCache.get(docId);
+    if (!list) return;
+    const shown = dmShown.get(docId);
+    const t = vid.currentTime;
+    list.forEach((d, i) => {
+      if (!shown.has(i) && d.time <= t && t - d.time < 0.5) {
+        shown.add(i); flyText(dmOv, d.text, d.color);
+      }
+    });
+  });
+  vid.addEventListener('seeked', () => dmShown.set(docId, new Set()));
+
+  // expose load function for observer
+  item._loadDm = () => loadDanmaku(docId);
+
   return item;
 }
 
-// ── IntersectionObserver: auto play / pause ─────────────
+// ── IntersectionObserver ─────────────────────────────────
 function setupObserver() {
   const obs = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -282,15 +423,16 @@ function setupObserver() {
       if (entry.intersectionRatio >= 0.75) {
         vid.muted = muteState;
         vid.play().catch(() => {
-          // Browser blocked unmuted autoplay → fall back to muted
-          vid.muted = true;
-          muteState = true;
-          syncMuteBtns();
-          vid.play().catch(() => {});
+          vid.muted = true; muteState = true;
+          syncMuteBtns(); vid.play().catch(() => {});
         });
+        // load danmaku on first view
+        if (entry.target._loadDm) {
+          entry.target._loadDm();
+          entry.target._loadDm = null;
+        }
       } else if (entry.intersectionRatio < 0.25) {
-        vid.pause();
-        vid.currentTime = 0;
+        vid.pause(); vid.currentTime = 0;
       }
     });
   }, { threshold: [0.25, 0.75] });
@@ -299,12 +441,8 @@ function setupObserver() {
 }
 
 function syncMuteBtns() {
-  document.querySelectorAll('.mute-btn').forEach(b => {
-    b.textContent = muteState ? '🔇' : '🔊';
-  });
-  document.querySelectorAll('.reel-video').forEach(v => {
-    if (!v.paused) v.muted = muteState;
-  });
+  document.querySelectorAll('.mute-btn').forEach(b => { b.textContent = muteState ? '🔇' : '🔊'; });
+  document.querySelectorAll('.reel-video').forEach(v => { if (!v.paused) v.muted = muteState; });
 }
 
 function escHtml(s) {

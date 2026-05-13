@@ -132,6 +132,31 @@
   .pip-dl-hint { font-size: 10px; color: #666; font-family: monospace; line-height: 1.5; }
   .pip-dl-close { align-self: flex-end; background: none; border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.5); padding: 5px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; font-family: "Noto Sans TC", sans-serif; transition: all .15s; margin-top: 4px; }
   .pip-dl-close:hover { border-color: rgba(230,57,70,.5); color: #e63946; }
+
+  /* ── Trim overlay (publish to platform) ── */
+  #trim-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.93); backdrop-filter: blur(6px); z-index: 200; flex-direction: column; align-items: center; padding: 16px; gap: 12px; overflow-y: auto; }
+  #trim-overlay.show { display: flex; }
+  #tov-title { font-size: 15px; font-weight: 700; color: #00f5ff; letter-spacing: .04em; align-self: flex-start; }
+  #tov-video { width: 100%; max-width: 480px; max-height: 46vh; background: #000; border-radius: 10px; object-fit: contain; display: block; }
+  .tov-tl-outer { width: 100%; max-width: 480px; padding: 4px 0 2px; }
+  .tov-tl-wrap { position: relative; height: 48px; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .tov-tl-bg { position: absolute; left: 12px; right: 12px; top: 50%; transform: translateY(-50%); height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; }
+  .tov-tl-range { position: absolute; top: 50%; transform: translateY(-50%); height: 4px; background: #00f5ff; border-radius: 2px; pointer-events: none; }
+  .tov-tl-handle { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 24px; height: 24px; border-radius: 50%; background: #00f5ff; border: 2.5px solid #fff; cursor: grab; touch-action: none; z-index: 2; box-shadow: 0 0 0 4px rgba(0,245,255,.2); }
+  .tov-tl-handle:active { cursor: grabbing; }
+  .tov-tl-labels { display: flex; justify-content: space-between; padding: 0 2px; font-size: 11px; color: #64748b; }
+  .tov-tl-dur { color: #00f5ff; font-weight: 700; }
+  .tov-btn-row { display: flex; gap: 10px; width: 100%; max-width: 480px; }
+  .tov-btn { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; -webkit-tap-highlight-color: transparent; border: none; font-family: "Noto Sans TC", sans-serif; }
+  .tov-btn-cancel { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15) !important; color: #94a3b8; }
+  .tov-btn-confirm { background: #00f5ff; color: #000; }
+  .tov-btn:disabled { opacity: .35; cursor: not-allowed; }
+  #tov-preview-btn { background: none; border: 1px solid rgba(0,245,255,.35); color: #00f5ff; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: "Noto Sans TC", sans-serif; white-space: nowrap; }
+  #tov-status { font-size: 12px; color: #94a3b8; text-align: center; min-height: 18px; width: 100%; max-width: 480px; }
+  .tov-proc { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(4px); z-index: 201; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-size: 14px; }
+  .tov-proc.show { display: flex; }
+  .tov-spinner { width: 32px; height: 32px; border: 3px solid rgba(0,245,255,.2); border-top-color: #00f5ff; border-radius: 50%; animation: tov-spin .8s linear infinite; }
+  @keyframes tov-spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -898,11 +923,7 @@ init().catch(console.error);
       <a id="det-dl-link" class="pip-dl-btn pip-dl-primary">下載影片</a>
       <button id="det-pub-btn" class="pip-dl-btn pip-dl-green">發布到平台</button>
     </div>
-    <div id="det-pub-panel" style="display:none;flex-direction:column;gap:7px;margin-top:2px;">
-      <input id="det-pub-title" type="text" placeholder="輸入標題（最多 30 字）" maxlength="30">
-      <button id="det-pub-confirm" class="pip-dl-btn pip-dl-green" style="width:100%;text-align:center;">確認發布</button>
-      <div id="det-pub-status" style="font-size:12px;color:#94a3b8;text-align:center;min-height:16px;"></div>
-    </div>
+    <div id="det-pub-status" style="font-size:12px;color:#94a3b8;text-align:center;min-height:16px;"></div>
     <button id="det-dl-close-btn" class="pip-dl-close">關閉</button>
   </div>
 </div>
@@ -1224,59 +1245,262 @@ init().catch(console.error);
     return bvh;
   }
 
-  // ---- publish to platform ----
-  document.getElementById('det-pub-btn').addEventListener('click', () => {
-    const panel = document.getElementById('det-pub-panel');
-    panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+  // ---- publish to platform (trim overlay) ----
+  const TOV_MAX_S = 15;
+  let tovDur = 0, tovSR = 0, tovER = 1, tovDragging = null;
+  let tovPreviewInterval = null;
+  let tovAudioCtx = null, tovAudioDest = null;
+
+  const tovVideo  = document.getElementById('tov-video');
+  const tovTlWrap = document.getElementById('tov-tl-wrap');
+
+  function tovFmt(s) {
+    return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  }
+
+  function tovUpdateTL() {
+    const w  = tovTlWrap.getBoundingClientRect().width || 320;
+    const tw = w - 24;
+    const sp = 12 + tovSR * tw;
+    const ep = 12 + tovER * tw;
+    document.getElementById('tov-tl-s').style.left      = sp + 'px';
+    document.getElementById('tov-tl-e').style.left      = ep + 'px';
+    document.getElementById('tov-tl-range').style.left  = sp + 'px';
+    document.getElementById('tov-tl-range').style.width = (ep - sp) + 'px';
+    const sel = (tovER - tovSR) * tovDur;
+    document.getElementById('tov-lbl-dur').textContent   = sel.toFixed(1);
+    document.getElementById('tov-lbl-start').textContent = tovFmt(tovSR * tovDur);
+    document.getElementById('tov-lbl-end').textContent   = tovFmt(tovER * tovDur);
+  }
+
+  function tovToRatio(cx) {
+    const r  = tovTlWrap.getBoundingClientRect();
+    const tw = r.width - 24;
+    return Math.max(0, Math.min(1, (cx - r.left - 12) / tw));
+  }
+
+  function tovOnDrag(cx) {
+    const r = tovToRatio(cx);
+    if (tovDragging === 's') {
+      let v = Math.min(r, tovER - 0.3 / tovDur);
+      if ((tovER - v) * tovDur > TOV_MAX_S) v = tovER - TOV_MAX_S / tovDur;
+      tovSR = Math.max(0, v);
+      tovVideo.currentTime = tovSR * tovDur;
+    } else {
+      let v = Math.max(r, tovSR + 0.3 / tovDur);
+      if ((v - tovSR) * tovDur > TOV_MAX_S) v = tovSR + TOV_MAX_S / tovDur;
+      tovER = Math.min(1, v);
+      tovVideo.currentTime = tovER * tovDur;
+    }
+    tovUpdateTL();
+  }
+
+  document.getElementById('tov-tl-s').addEventListener('pointerdown', e => {
+    tovDragging = 's'; e.preventDefault();
+    document.getElementById('tov-tl-s').setPointerCapture(e.pointerId);
+  });
+  document.getElementById('tov-tl-e').addEventListener('pointerdown', e => {
+    tovDragging = 'e'; e.preventDefault();
+    document.getElementById('tov-tl-e').setPointerCapture(e.pointerId);
+  });
+  document.addEventListener('pointermove', e => { if (tovDragging) tovOnDrag(e.clientX); });
+  document.addEventListener('pointerup',   () => { tovDragging = null; });
+
+  document.getElementById('tov-preview-btn').addEventListener('click', () => {
+    clearInterval(tovPreviewInterval);
+    if (!tovVideo.paused) {
+      tovVideo.pause();
+      document.getElementById('tov-preview-btn').textContent = '▶ 預覽片段';
+      return;
+    }
+    tovVideo.currentTime = tovSR * tovDur;
+    tovVideo.play();
+    document.getElementById('tov-preview-btn').textContent = '⏸ 暫停';
+    const endT = tovER * tovDur;
+    tovPreviewInterval = setInterval(() => {
+      if (tovVideo.currentTime >= endT) {
+        tovVideo.pause();
+        document.getElementById('tov-preview-btn').textContent = '▶ 預覽片段';
+        clearInterval(tovPreviewInterval);
+      }
+    }, 80);
   });
 
-  document.getElementById('det-pub-confirm').addEventListener('click', async () => {
-    const title  = document.getElementById('det-pub-title').value.trim();
-    const status = document.getElementById('det-pub-status');
-    const btn    = document.getElementById('det-pub-confirm');
-    if (!title)        { status.textContent = '⚠ 請輸入標題'; return; }
-    if (!detLastBlob)  { status.textContent = '⚠ 沒有影片，請重新錄影'; return; }
+  function tovClose() {
+    tovVideo.pause();
+    clearInterval(tovPreviewInterval);
+    document.getElementById('tov-preview-btn').textContent = '▶ 預覽片段';
+    document.getElementById('tov-confirm').disabled  = false;
+    document.getElementById('tov-confirm').textContent = '確認剪輯 →';
+    document.getElementById('tov-cancel').disabled   = false;
+    document.getElementById('tov-cancel').textContent = '取消';
+    document.getElementById('tov-status').textContent = '';
+    document.getElementById('trim-overlay').classList.remove('show');
+  }
 
-    btn.disabled = true;
-    status.textContent = '上傳中… 0%';
+  document.getElementById('tov-cancel').addEventListener('click', tovClose);
 
-    const formData = new FormData();
-    formData.append('file', detLastBlob, 'video.' + detLastExt);
-    formData.append('upload_preset', _CLOUDINARY_PRESET);
-
-    const xhr = new XMLHttpRequest();
-    xhr.upload.onprogress = e => {
-      if (e.lengthComputable) {
-        status.textContent = '上傳中… ' + Math.round(e.loaded / e.total * 100) + '%';
-      }
+  document.getElementById('det-pub-btn').addEventListener('click', () => {
+    if (!detLastBlob) return;
+    const url = URL.createObjectURL(detLastBlob);
+    tovVideo.src = url;
+    tovVideo.onloadedmetadata = () => {
+      tovDur = tovVideo.duration;
+      tovSR  = 0;
+      tovER  = Math.min(1, TOV_MAX_S / tovDur);
+      tovUpdateTL();
     };
-    xhr.onload = async () => {
-      if (xhr.status !== 200) {
-        status.textContent = '✗ 上傳失敗（' + xhr.status + '）';
-        btn.disabled = false; return;
-      }
+    document.getElementById('tov-status').textContent = '';
+    document.getElementById('trim-overlay').classList.add('show');
+  });
+
+  async function tovExtractClip(vid, t0, t1) {
+    return new Promise((resolve, reject) => {
+      const cvs = document.createElement('canvas');
+      cvs.width  = vid.videoWidth  || 640;
+      cvs.height = vid.videoHeight || 480;
+      const ctx  = cvs.getContext('2d');
+
+      let stream;
       try {
-        const result = JSON.parse(xhr.responseText);
-        const doc = await _db.collection('videos').add({
-          title,
-          url: result.secure_url,
-          ext: detLastExt,
-          size: detLastBlob.size,
-          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        const base     = location.href.replace(/[^/]*$/, '');
-        const videoUrl = base + 'platform/video.html?id=' + doc.id;
-        status.innerHTML = '✓ 發布成功！<br><a href="' + videoUrl + '" target="_blank" style="color:#10b981;text-decoration:underline;">查看影片 →</a>';
-      } catch(e) {
-        status.textContent = '✗ 儲存失敗：' + e.message;
+        const vidStream = cvs.captureStream(30);
+        if (!tovAudioCtx) {
+          tovAudioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+          const src    = tovAudioCtx.createMediaElementSource(vid);
+          tovAudioDest = tovAudioCtx.createMediaStreamDestination();
+          src.connect(tovAudioDest);
+          src.connect(tovAudioCtx.destination);
+        }
+        if (tovAudioCtx.state === 'suspended') tovAudioCtx.resume();
+        stream = new MediaStream([
+          ...vidStream.getVideoTracks(),
+          ...tovAudioDest.stream.getAudioTracks(),
+        ]);
+      } catch (_) {
+        stream = cvs.captureStream(30);
       }
-      btn.disabled = false;
-    };
-    xhr.onerror = () => { status.textContent = '✗ 網路錯誤，請重試'; btn.disabled = false; };
-    xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + _CLOUDINARY_CLOUD + '/video/upload');
-    xhr.send(formData);
+
+      const mime = ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+        .find(t => MediaRecorder.isTypeSupported(t)) || '';
+      const rec    = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+      const chunks = [];
+      rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      rec.onstop  = () => resolve(new Blob(chunks, { type: rec.mimeType || 'video/webm' }));
+      rec.onerror = reject;
+
+      vid.currentTime = t0;
+      vid.onseeked = () => {
+        vid.onseeked = null;
+        rec.start(100);
+        vid.play();
+        let done = false;
+        (function draw() {
+          if (done) return;
+          if (vid.currentTime >= t1 - 0.04) {
+            done = true; vid.pause(); rec.stop(); return;
+          }
+          ctx.drawImage(vid, 0, 0, cvs.width, cvs.height);
+          requestAnimationFrame(draw);
+        })();
+      };
+    });
+  }
+
+  async function tovUpload(blob) {
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const fd  = new FormData();
+    fd.append('file',          blob, 'clip.' + ext);
+    fd.append('upload_preset', _CLOUDINARY_PRESET);
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const p = Math.round(e.loaded / e.total * 100);
+          document.getElementById('tov-status').textContent = '上傳中… ' + p + '%';
+        }
+      };
+      xhr.onload = async () => {
+        if (xhr.status !== 200) { reject(new Error('HTTP ' + xhr.status)); return; }
+        try {
+          const res = JSON.parse(xhr.responseText);
+          await _db.collection('videos').add({
+            title: '揮拍練習',
+            url:   res.secure_url,
+            ext,
+            size:  blob.size,
+            uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          resolve();
+        } catch (e) { reject(e); }
+      };
+      xhr.onerror = () => reject(new Error('網路錯誤'));
+      xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + _CLOUDINARY_CLOUD + '/video/upload');
+      xhr.send(fd);
+    });
+  }
+
+  document.getElementById('tov-confirm').addEventListener('click', async () => {
+    tovVideo.pause();
+    clearInterval(tovPreviewInterval);
+    document.getElementById('tov-preview-btn').textContent = '▶ 預覽片段';
+    document.getElementById('tov-confirm').disabled = true;
+    document.getElementById('tov-cancel').disabled  = true;
+
+    const proc    = document.getElementById('tov-proc');
+    const procMsg = document.getElementById('tov-proc-msg');
+    procMsg.textContent = '剪輯中，請稍候…';
+    proc.classList.add('show');
+
+    try {
+      const clip = await tovExtractClip(tovVideo, tovSR * tovDur, tovER * tovDur);
+      proc.classList.remove('show');
+      document.getElementById('tov-status').textContent = '上傳中… 0%';
+      await tovUpload(clip);
+      document.getElementById('tov-status').textContent = '✓ 發布成功！已上傳到社群';
+      document.getElementById('tov-confirm').textContent = '✓ 完成';
+      document.getElementById('tov-cancel').disabled  = false;
+      document.getElementById('tov-cancel').textContent = '關閉';
+    } catch (e) {
+      proc.classList.remove('show');
+      document.getElementById('tov-status').textContent = '✗ 失敗：' + e.message;
+      document.getElementById('tov-confirm').disabled = false;
+      document.getElementById('tov-cancel').disabled  = false;
+    }
   });
 })();
 </script>
+
+<!-- Trim overlay: publish practice recording to platform -->
+<div id="trim-overlay">
+  <div id="tov-title">剪輯片段（最多 15 秒）</div>
+  <video id="tov-video" playsinline preload="metadata"></video>
+  <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:480px;">
+    <button id="tov-preview-btn">▶ 預覽片段</button>
+    <span style="font-size:12px;color:#64748b;">拖拉兩端選取，最多 15 秒</span>
+  </div>
+  <div class="tov-tl-outer">
+    <div class="tov-tl-wrap" id="tov-tl-wrap">
+      <div class="tov-tl-bg"></div>
+      <div class="tov-tl-range" id="tov-tl-range"></div>
+      <div class="tov-tl-handle" id="tov-tl-s"></div>
+      <div class="tov-tl-handle" id="tov-tl-e"></div>
+    </div>
+    <div class="tov-tl-labels">
+      <span id="tov-lbl-start">0:00</span>
+      <span>已選 <span class="tov-tl-dur" id="tov-lbl-dur">0.0</span> 秒</span>
+      <span id="tov-lbl-end">0:00</span>
+    </div>
+  </div>
+  <div class="tov-btn-row">
+    <button class="tov-btn tov-btn-cancel" id="tov-cancel">取消</button>
+    <button class="tov-btn tov-btn-confirm" id="tov-confirm">確認剪輯 →</button>
+  </div>
+  <div id="tov-status"></div>
+</div>
+<div class="tov-proc" id="tov-proc">
+  <div class="tov-spinner"></div>
+  <div id="tov-proc-msg">剪輯中，請稍候…</div>
+</div>
 </body>
 </html>

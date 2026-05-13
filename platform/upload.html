@@ -189,7 +189,6 @@
   <!-- Step 4: Upload -->
   <div class="step" id="step-upload">
     <div class="video-frame"><video id="preview-video" controls playsinline></video></div>
-    <input type="text" id="title-input" placeholder="輸入影片標題（必填）" maxlength="40">
     <button class="btn-primary" id="btn-upload">上傳到社群</button>
     <div id="prog-section" style="display:none;">
       <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
@@ -465,15 +464,13 @@ async function extractClip(vid, t0, t1) {
 // ── Upload ───────────────────────────────────────────────
 function enterUpload() {
   $('preview-video').src = URL.createObjectURL(trimmedBlob);
-  $('title-input').value = '';
   $('btn-upload').disabled = false;
   $('prog-section').style.display = 'none';
   showStep('upload');
 }
 
 $('btn-upload').addEventListener('click', async () => {
-  const title = $('title-input').value.trim();
-  if (!title) { alert('請輸入影片標題'); return; }
+  const title = '揮拍練習';
 
   $('btn-upload').disabled = true;
   $('prog-section').style.display = '';
