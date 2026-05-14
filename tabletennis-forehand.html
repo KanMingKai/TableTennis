@@ -1365,7 +1365,15 @@ init().catch(console.error);
   const tovTlWrap = document.getElementById('tov-tl-wrap');
 
   function tovFmt(s) {
+    if (!isFinite(s) || s < 0) s = 0;
     return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+  }
+
+  function initTovTrim(dur) {
+    tovDur = dur;
+    tovSR  = 0;
+    tovER  = Math.min(1, TOV_MAX_S / tovDur);
+    tovUpdateTL();
   }
 
   function tovUpdateTL() {
@@ -1456,10 +1464,20 @@ init().catch(console.error);
     const url = URL.createObjectURL(detLastBlob);
     tovVideo.src = url;
     tovVideo.onloadedmetadata = () => {
-      tovDur = tovVideo.duration;
-      tovSR  = 0;
-      tovER  = Math.min(1, TOV_MAX_S / tovDur);
-      tovUpdateTL();
+      if (isFinite(tovVideo.duration) && tovVideo.duration > 0) {
+        initTovTrim(tovVideo.duration);
+      } else {
+        // MediaRecorder blob often lacks duration; seek past end to discover it
+        tovVideo.currentTime = 1e10;
+      }
+    };
+    tovVideo.onseeked = () => {
+      if (!isFinite(tovDur) || tovDur === 0) {
+        const dur = tovVideo.currentTime;
+        tovVideo.onseeked = null;
+        tovVideo.currentTime = 0;
+        if (dur > 0) initTovTrim(dur);
+      }
     };
     document.getElementById('tov-status').textContent = '';
     document.getElementById('trim-overlay').classList.add('show');
