@@ -105,6 +105,9 @@
     -webkit-tap-highlight-color: transparent;
   }
   .action-btn:active { background: rgba(255,255,255,.2); transform: scale(0.92); }
+  .like-btn { flex-direction: column; gap: 2px; }
+  .like-btn.liked { background: rgba(239,68,68,.5); }
+  .like-count { font-size: 11px; line-height: 1; }
 
   /* danmaku input bar */
   .dm-bar {
@@ -300,6 +303,36 @@ function makeReel(doc) {
   const actions = document.createElement('div');
   actions.className = 'reel-actions';
 
+  // like button
+  const storageKey  = 'liked_' + docId;
+  let likeCount     = d.likes || 0;
+  const likeBtn     = document.createElement('button');
+  likeBtn.className = 'action-btn like-btn' + (localStorage.getItem(storageKey) ? ' liked' : '');
+  likeBtn.innerHTML = '<span class="like-icon">' + (localStorage.getItem(storageKey) ? '❤️' : '🤍') + '</span>'
+                    + '<span class="like-count">' + likeCount + '</span>';
+
+  async function toggleLike() {
+    const wasLiked = !!localStorage.getItem(storageKey);
+    if (wasLiked) {
+      localStorage.removeItem(storageKey);
+      likeCount = Math.max(0, likeCount - 1);
+      likeBtn.classList.remove('liked');
+      likeBtn.querySelector('.like-icon').textContent = '🤍';
+    } else {
+      localStorage.setItem(storageKey, '1');
+      likeCount++;
+      likeBtn.classList.add('liked');
+      likeBtn.querySelector('.like-icon').textContent = '❤️';
+    }
+    likeBtn.querySelector('.like-count').textContent = likeCount;
+    try {
+      await db.collection('videos').doc(docId).update({
+        likes: firebase.firestore.FieldValue.increment(wasLiked ? -1 : 1)
+      });
+    } catch(_) {}
+  }
+  likeBtn.addEventListener('click', e => { e.stopPropagation(); toggleLike(); });
+
   const muteBtn = document.createElement('button');
   muteBtn.className = 'action-btn mute-btn';
   muteBtn.title = '靜音切換';
@@ -324,11 +357,16 @@ function makeReel(doc) {
     try {
       await db.collection('videos').doc(docId).delete();
       item.remove();
+      const container = document.getElementById('reels');
+      if (container && !container.querySelector('.reel-item')) {
+        container.innerHTML = '<div class="reel-empty">還沒有影片<br>快去上傳第一支揮拍吧！</div>';
+      }
     } catch(err) {
       alert('刪除失敗：' + err.message);
     }
   });
 
+  actions.appendChild(likeBtn);
   actions.appendChild(muteBtn);
   actions.appendChild(delBtn);
   bottom.appendChild(info);
@@ -351,13 +389,23 @@ function makeReel(doc) {
   dmBar.appendChild(dmInput);
   dmBar.appendChild(dmSend);
 
-  // tap to play/pause
+  // single tap → play/pause, double tap → like
+  let tapTimer = null, tapCount = 0;
   item.addEventListener('click', e => {
     if (e.target.closest('.action-btn, .dm-bar')) return;
-    if (vid.paused) { vid.play(); hint.textContent = '▶'; }
-    else            { vid.pause(); hint.textContent = '⏸'; }
-    hint.classList.add('show');
-    setTimeout(() => hint.classList.remove('show'), 700);
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => {
+      if (tapCount >= 2) {
+        toggleLike();
+      } else {
+        if (vid.paused) { vid.play(); hint.textContent = '▶'; }
+        else            { vid.pause(); hint.textContent = '⏸'; }
+        hint.classList.add('show');
+        setTimeout(() => hint.classList.remove('show'), 700);
+      }
+      tapCount = 0;
+    }, 280);
   });
 
   item.appendChild(vid);

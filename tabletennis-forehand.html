@@ -920,9 +920,10 @@ init().catch(console.error);
   <div class="pip-dl-box">
     <div class="pip-dl-title">錄影完成</div>
     <div id="det-dl-size" class="pip-dl-size"></div>
-    <video id="det-dl-preview" controls style="width:100%;max-height:180px;margin:4px 0;border-radius:4px;background:#000;"></video>
+    <video id="det-dl-preview" controls style="width:100%;max-height:240px;margin:4px 0;border-radius:4px;background:#000;"></video>
     <div class="pip-dl-btns">
       <a id="det-dl-link" class="pip-dl-btn pip-dl-primary">下載影片</a>
+      <button id="det-preview-full" class="pip-dl-btn">⛶ 全螢幕</button>
       <button id="det-pub-btn" class="pip-dl-btn pip-dl-green">發布到平台</button>
     </div>
     <div id="det-pub-status" style="font-size:12px;color:#94a3b8;text-align:center;min-height:16px;"></div>
@@ -1093,6 +1094,11 @@ init().catch(console.error);
     else        { link.target = ''; link.download = 'pose-' + Date.now() + '.' + ext; link.textContent = '下載影片'; }
     document.getElementById('det-dl-overlay').style.display = 'flex';
   }
+
+  document.getElementById('det-preview-full').addEventListener('click', () => {
+    const v = document.getElementById('det-dl-preview');
+    (v.requestFullscreen || v.webkitRequestFullscreen || (() => {})).call(v);
+  });
 
   document.getElementById('det-dl-close-btn').addEventListener('click', () => {
     const link = document.getElementById('det-dl-link');
