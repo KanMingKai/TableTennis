@@ -1265,8 +1265,8 @@ init().catch(console.error);
 
     // Ellipse radius from ear-to-ear distance
     const earDist = Math.hypot((earL.x - earR.x) * W, (earL.y - earR.y) * H);
-    const rw = earDist * 0.58;
-    const rh = earDist * 0.72;
+    const rw = earDist * 0.78;
+    const rh = earDist * 1.05;
     if (rw < 6 || rh < 6) return;
 
     // Match video crop used in composeDet
