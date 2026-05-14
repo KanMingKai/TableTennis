@@ -892,6 +892,7 @@ init().catch(console.error);
       <span id="det-fps" class="det-fps">-- FPS</span>
       <button id="det-cam-btn" class="det-btn">⟳</button>
       <button id="det-mirror-btn" class="det-btn" style="color:#00f5ff;">🪞</button>
+      <button id="det-blur-btn" class="det-btn">🌫️</button>
     </div>
   </div>
   <video id="det-video" autoplay playsinline muted></video>
@@ -1001,6 +1002,7 @@ init().catch(console.error);
   let detLog = [], detFpsEst = 30;
   let detLastBlob = null, detLastExt = 'webm';
   let detMirror = true;
+  let detFaceBlur = false;
 
   const detVideo  = document.getElementById('det-video');
   const detCanvas = document.getElementById('det-canvas');
@@ -1018,6 +1020,11 @@ init().catch(console.error);
   document.getElementById('det-mirror-btn').addEventListener('click', () => {
     detMirror = !detMirror;
     applyMirrorCSS();
+  });
+
+  document.getElementById('det-blur-btn').addEventListener('click', () => {
+    detFaceBlur = !detFaceBlur;
+    document.getElementById('det-blur-btn').style.color = detFaceBlur ? '#00f5ff' : '';
   });
 
   // ---- switch camera ----
@@ -1159,7 +1166,9 @@ init().catch(console.error);
     const W = detCanvas.width, H = detCanvas.height;
     const pt = i => ({ x: lm[i].x * W, y: lm[i].y * H, v: lm[i].visibility });
 
-    const BONES = [[11,12],[11,23],[12,24],[23,24],[12,14],[14,16],[16,18],[16,20],[11,13],[13,15],[15,17],[15,19],[24,26],[26,28],[28,30],[28,32],[23,25],[25,27],[27,29],[27,31]];
+    if (detFaceBlur) applyFaceBlur(ctx, lm, W, H);
+
+    const BONES =[[11,12],[11,23],[12,24],[23,24],[12,14],[14,16],[16,18],[16,20],[11,13],[13,15],[15,17],[15,19],[24,26],[26,28],[28,30],[28,32],[23,25],[25,27],[27,29],[27,31]];
     ctx.shadowBlur = 10;
     BONES.forEach(([a, b]) => {
       const pa = pt(a), pb = pt(b);
@@ -1241,6 +1250,41 @@ init().catch(console.error);
       if (tr > hr) { sw = th * hr; sx = (tw - sw) / 2; } else { sh = tw / hr; sy = (th - sh) / 2; }
       rc.drawImage(threeCvs, sx, sy, sw, sh, camW, 0, camW, H);
     }
+  }
+
+  function applyFaceBlur(ctx, lm, W, H) {
+    const nose = lm[0], earL = lm[7], earR = lm[8];
+    if (!nose || !earL || !earR) return;
+    if ((nose.visibility || 0) < 0.25 && (earL.visibility || 0) < 0.25 && (earR.visibility || 0) < 0.25) return;
+
+    // Face center: average of nose and ear midpoint
+    const emx = ((earL.x + earR.x) / 2) * W;
+    const emy = ((earL.y + earR.y) / 2) * H;
+    const cx  = (nose.x * W + emx) / 2;
+    const cy  = (nose.y * H + emy) / 2;
+
+    // Ellipse radius from ear-to-ear distance
+    const earDist = Math.hypot((earL.x - earR.x) * W, (earL.y - earR.y) * H);
+    const rw = earDist * 0.58;
+    const rh = earDist * 0.72;
+    if (rw < 6 || rh < 6) return;
+
+    // Match video crop used in composeDet
+    const vw = detVideo.videoWidth, vh = detVideo.videoHeight;
+    if (!vw || !vh) return;
+    const cr = W / H;
+    let sx = 0, sy = 0, sw = vw, sh = vh;
+    if (vw / vh > cr) { sw = vh * cr; sx = (vw - sw) / 2; }
+    else              { sh = vw / cr; sy = (vh - sh) / 2; }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.filter = 'blur(20px)';
+    ctx.drawImage(detVideo, sx, sy, sw, sh, 0, 0, W, H);
+    ctx.filter = 'none';
+    ctx.restore();
   }
 
   function detAngle(a, b, c) {
