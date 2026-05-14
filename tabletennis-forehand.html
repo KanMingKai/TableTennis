@@ -891,6 +891,7 @@ init().catch(console.error);
       <span id="det-status-dot" class="det-dot"></span>
       <span id="det-fps" class="det-fps">-- FPS</span>
       <button id="det-cam-btn" class="det-btn">⟳</button>
+      <button id="det-mirror-btn" class="det-btn" style="color:#00f5ff;">🪞</button>
     </div>
   </div>
   <video id="det-video" autoplay playsinline muted></video>
@@ -926,6 +927,38 @@ init().catch(console.error);
     <div id="det-pub-status" style="font-size:12px;color:#94a3b8;text-align:center;min-height:16px;"></div>
     <button id="det-dl-close-btn" class="pip-dl-close">關閉</button>
   </div>
+</div>
+
+<!-- Trim overlay: publish practice recording to platform -->
+<div id="trim-overlay">
+  <div id="tov-title">剪輯片段（最多 15 秒）</div>
+  <video id="tov-video" playsinline preload="metadata"></video>
+  <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:480px;">
+    <button id="tov-preview-btn">▶ 預覽片段</button>
+    <span style="font-size:12px;color:#64748b;">拖拉兩端選取，最多 15 秒</span>
+  </div>
+  <div class="tov-tl-outer">
+    <div class="tov-tl-wrap" id="tov-tl-wrap">
+      <div class="tov-tl-bg"></div>
+      <div class="tov-tl-range" id="tov-tl-range"></div>
+      <div class="tov-tl-handle" id="tov-tl-s"></div>
+      <div class="tov-tl-handle" id="tov-tl-e"></div>
+    </div>
+    <div class="tov-tl-labels">
+      <span id="tov-lbl-start">0:00</span>
+      <span>已選 <span class="tov-tl-dur" id="tov-lbl-dur">0.0</span> 秒</span>
+      <span id="tov-lbl-end">0:00</span>
+    </div>
+  </div>
+  <div class="tov-btn-row">
+    <button class="tov-btn tov-btn-cancel" id="tov-cancel">取消</button>
+    <button class="tov-btn tov-btn-confirm" id="tov-confirm">確認剪輯 →</button>
+  </div>
+  <div id="tov-status"></div>
+</div>
+<div class="tov-proc" id="tov-proc">
+  <div class="tov-spinner"></div>
+  <div id="tov-proc-msg">剪輯中，請稍候…</div>
 </div>
 
 <!-- Firebase compat SDK (no bundler needed) -->
@@ -967,10 +1000,25 @@ init().catch(console.error);
   let detRecInterval = null, detRecStart = 0;
   let detLog = [], detFpsEst = 30;
   let detLastBlob = null, detLastExt = 'webm';
+  let detMirror = true;
 
   const detVideo  = document.getElementById('det-video');
   const detCanvas = document.getElementById('det-canvas');
   const detRecCvs = document.getElementById('det-rec-canvas');
+
+  function applyMirrorCSS() {
+    const t = detMirror ? 'scaleX(-1)' : 'none';
+    detVideo.style.transform  = t;
+    detCanvas.style.transform = t;
+    const btn = document.getElementById('det-mirror-btn');
+    btn.style.color = detMirror ? '#00f5ff' : '#64748b';
+  }
+  applyMirrorCSS();
+
+  document.getElementById('det-mirror-btn').addEventListener('click', () => {
+    detMirror = !detMirror;
+    applyMirrorCSS();
+  });
 
   // ---- switch camera ----
   document.getElementById('det-cam-btn').addEventListener('click', async () => {
@@ -1170,10 +1218,10 @@ init().catch(console.error);
     const rc = detRecCvs.getContext('2d');
     rc.fillStyle = '#000'; rc.fillRect(0, 0, W, H);
 
-    // left half: mirrored camera + skeleton
+    // left half: camera + skeleton (mirror follows detMirror toggle)
     rc.save();
     rc.beginPath(); rc.rect(0, 0, camW, H); rc.clip();
-    rc.translate(camW, 0); rc.scale(-1, 1);
+    if (detMirror) { rc.translate(camW, 0); rc.scale(-1, 1); }
     const vw = detVideo.videoWidth, vh = detVideo.videoHeight;
     if (vw > 0 && vh > 0) {
       const vr = vw / vh, cr = camW / H;
@@ -1471,36 +1519,5 @@ init().catch(console.error);
 })();
 </script>
 
-<!-- Trim overlay: publish practice recording to platform -->
-<div id="trim-overlay">
-  <div id="tov-title">剪輯片段（最多 15 秒）</div>
-  <video id="tov-video" playsinline preload="metadata"></video>
-  <div style="display:flex;align-items:center;gap:10px;width:100%;max-width:480px;">
-    <button id="tov-preview-btn">▶ 預覽片段</button>
-    <span style="font-size:12px;color:#64748b;">拖拉兩端選取，最多 15 秒</span>
-  </div>
-  <div class="tov-tl-outer">
-    <div class="tov-tl-wrap" id="tov-tl-wrap">
-      <div class="tov-tl-bg"></div>
-      <div class="tov-tl-range" id="tov-tl-range"></div>
-      <div class="tov-tl-handle" id="tov-tl-s"></div>
-      <div class="tov-tl-handle" id="tov-tl-e"></div>
-    </div>
-    <div class="tov-tl-labels">
-      <span id="tov-lbl-start">0:00</span>
-      <span>已選 <span class="tov-tl-dur" id="tov-lbl-dur">0.0</span> 秒</span>
-      <span id="tov-lbl-end">0:00</span>
-    </div>
-  </div>
-  <div class="tov-btn-row">
-    <button class="tov-btn tov-btn-cancel" id="tov-cancel">取消</button>
-    <button class="tov-btn tov-btn-confirm" id="tov-confirm">確認剪輯 →</button>
-  </div>
-  <div id="tov-status"></div>
-</div>
-<div class="tov-proc" id="tov-proc">
-  <div class="tov-spinner"></div>
-  <div id="tov-proc-msg">剪輯中，請稍候…</div>
-</div>
 </body>
 </html>
