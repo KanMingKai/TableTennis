@@ -1390,6 +1390,7 @@ init().catch(console.error);
   }
 
   function tovOnDrag(cx) {
+    if (!tovDur || !isFinite(tovDur)) return;
     const r = tovToRatio(cx);
     if (tovDragging === 's') {
       let v = Math.min(r, tovER - 0.3 / tovDur);
