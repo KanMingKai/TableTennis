@@ -1166,7 +1166,7 @@ init().catch(console.error);
     const W = detCanvas.width, H = detCanvas.height;
     const pt = i => ({ x: lm[i].x * W, y: lm[i].y * H, v: lm[i].visibility });
 
-    if (detFaceBlur) applyFaceBlur(ctx, lm, W, H);
+    if (detFaceBlur) applyFaceMosaic(ctx, lm, W, H);
 
     const BONES =[[11,12],[11,23],[12,24],[23,24],[12,14],[14,16],[16,18],[16,20],[11,13],[13,15],[15,17],[15,19],[24,26],[26,28],[28,30],[28,32],[23,25],[25,27],[27,29],[27,31]];
     ctx.shadowBlur = 10;
@@ -1252,7 +1252,7 @@ init().catch(console.error);
     }
   }
 
-  function applyFaceBlur(ctx, lm, W, H) {
+  function applyFaceMosaic(ctx, lm, W, H) {
     const nose = lm[0], earL = lm[7], earR = lm[8];
     if (!nose || !earL || !earR) return;
     if ((nose.visibility || 0) < 0.25 && (earL.visibility || 0) < 0.25 && (earR.visibility || 0) < 0.25) return;
@@ -1277,13 +1277,31 @@ init().catch(console.error);
     if (vw / vh > cr) { sw = vh * cr; sx = (vw - sw) / 2; }
     else              { sh = vw / cr; sy = (vh - sh) / 2; }
 
+    // Bounding box of the ellipse in canvas space
+    const bx = cx - rw, by = cy - rh, bw = rw * 2, bh = rh * 2;
+
+    // Corresponding region in the source video frame
+    const vfx = sx + (bx / W) * sw;
+    const vfy = sy + (by / H) * sh;
+    const vfw = (bw / W) * sw;
+    const vfh = (bh / H) * sh;
+
+    // Downsample to mosaic block size then stretch back (pixelate)
+    const BLOCK = 12;
+    const cols  = Math.max(1, Math.round(bw / BLOCK));
+    const rows  = Math.max(1, Math.round(bh / BLOCK));
+    const tmp   = document.createElement('canvas');
+    tmp.width   = cols; tmp.height = rows;
+    const tCtx  = tmp.getContext('2d');
+    tCtx.drawImage(detVideo, vfx, vfy, vfw, vfh, 0, 0, cols, rows);
+
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI * 2);
     ctx.clip();
-    ctx.filter = 'blur(20px)';
-    ctx.drawImage(detVideo, sx, sy, sw, sh, 0, 0, W, H);
-    ctx.filter = 'none';
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tmp, 0, 0, cols, rows, bx, by, bw, bh);
+    ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
 
