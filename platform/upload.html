@@ -315,11 +315,26 @@ function enterTrim(url) {
   $('file-input').value = '';
   trimVid.src = url;
   trimVid.onloadedmetadata = () => {
-    vDur   = trimVid.duration;
-    sRatio = 0;
-    eRatio = Math.min(1, MAX_S / vDur);
-    updateTL();
-    showStep('trim');
+    if (!isFinite(trimVid.duration)) {
+      // MediaRecorder WebM blobs lack duration metadata; seeking to a large
+      // timestamp forces the browser to scan the file and correct it.
+      trimVid.currentTime = 1e9;
+      trimVid.onseeked = () => {
+        trimVid.onseeked = null;
+        trimVid.currentTime = 0;
+        vDur   = trimVid.duration;
+        sRatio = 0;
+        eRatio = Math.min(1, MAX_S / vDur);
+        updateTL();
+        showStep('trim');
+      };
+    } else {
+      vDur   = trimVid.duration;
+      sRatio = 0;
+      eRatio = Math.min(1, MAX_S / vDur);
+      updateTL();
+      showStep('trim');
+    }
   };
 }
 
