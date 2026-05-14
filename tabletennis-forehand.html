@@ -1007,6 +1007,9 @@ init().catch(console.error);
   const detVideo  = document.getElementById('det-video');
   const detCanvas = document.getElementById('det-canvas');
   const detRecCvs = document.getElementById('det-rec-canvas');
+  const detCtx    = detCanvas.getContext('2d');
+  const mosaicCvs = document.createElement('canvas');
+  const mosaicCtx = mosaicCvs.getContext('2d');
 
   function applyMirrorCSS() {
     const t = detMirror ? 'scaleX(-1)' : 'none';
@@ -1142,7 +1145,7 @@ init().catch(console.error);
 
   // ---- pose results ----
   function onDetResults(results) {
-    const ctx = detCanvas.getContext('2d');
+    const ctx = detCtx;
     detCanvas.width  = detCanvas.offsetWidth;
     detCanvas.height = detCanvas.offsetHeight;
     ctx.clearRect(0, 0, detCanvas.width, detCanvas.height);
@@ -1290,17 +1293,16 @@ init().catch(console.error);
     const BLOCK = 12;
     const cols  = Math.max(1, Math.round(bw / BLOCK));
     const rows  = Math.max(1, Math.round(bh / BLOCK));
-    const tmp   = document.createElement('canvas');
-    tmp.width   = cols; tmp.height = rows;
-    const tCtx  = tmp.getContext('2d');
-    tCtx.drawImage(detVideo, vfx, vfy, vfw, vfh, 0, 0, cols, rows);
+    mosaicCvs.width  = cols;
+    mosaicCvs.height = rows;
+    mosaicCtx.drawImage(detVideo, vfx, vfy, vfw, vfh, 0, 0, cols, rows);
 
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI * 2);
     ctx.clip();
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(tmp, 0, 0, cols, rows, bx, by, bw, bh);
+    ctx.drawImage(mosaicCvs, 0, 0, cols, rows, bx, by, bw, bh);
     ctx.imageSmoothingEnabled = true;
     ctx.restore();
   }
