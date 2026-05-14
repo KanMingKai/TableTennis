@@ -268,7 +268,7 @@ function makeReel(doc) {
   // video
   const vid = document.createElement('video');
   vid.className = 'reel-video';
-  vid.src       = d.url;
+  vid.src       = d.url.replace('/upload/', '/upload/f_auto/');
   vid.muted     = true;
   vid.loop      = true;
   vid.preload   = 'metadata';

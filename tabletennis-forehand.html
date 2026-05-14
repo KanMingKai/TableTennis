@@ -1505,10 +1505,8 @@ init().catch(console.error);
       proc.classList.remove('show');
       document.getElementById('tov-status').textContent = '上傳中… 0%';
       await tovUpload(clip);
-      document.getElementById('tov-status').textContent = '✓ 發布成功！已上傳到社群';
-      document.getElementById('tov-confirm').textContent = '✓ 完成';
-      document.getElementById('tov-cancel').disabled  = false;
-      document.getElementById('tov-cancel').textContent = '關閉';
+      document.getElementById('tov-status').textContent = '✓ 發布成功！即將跳轉至社群…';
+      setTimeout(() => { location.href = 'platform/index.html'; }, 1200);
     } catch (e) {
       proc.classList.remove('show');
       document.getElementById('tov-status').textContent = '✗ 失敗：' + e.message;
