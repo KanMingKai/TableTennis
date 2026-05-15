@@ -64,9 +64,22 @@
   }
   .tl-range {
     position: absolute; top: 50%; transform: translateY(-50%);
-    height: 4px; background: var(--cyan); border-radius: 2px;
+    height: 24px; border-radius: 4px;
+    background: rgba(0,245,255,.15);
+    border-top: 2px solid var(--cyan); border-bottom: 2px solid var(--cyan);
     pointer-events: none;
   }
+  #tl-c {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 32px; height: 32px; border-radius: 6px;
+    background: rgba(0,245,255,.2); border: 1.5px solid rgba(0,245,255,.55);
+    cursor: grab; touch-action: none; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: rgba(0,245,255,.85);
+    box-shadow: 0 0 0 3px rgba(0,245,255,.1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tl-c:active { cursor: grabbing; background: rgba(0,245,255,.3); }
   .tl-handle {
     position: absolute; top: 50%; transform: translate(-50%, -50%);
     width: 24px; height: 24px; border-radius: 50%;
@@ -165,13 +178,14 @@
 
     <div class="btn-row" style="align-items:center;">
       <button class="btn-sm" id="btn-preview-play">▶ 預覽片段</button>
-      <span style="font-size:12px;color:var(--gray);">拖拉兩端選取，最多 15 秒</span>
+      <span style="font-size:12px;color:var(--gray);">拖中間移動 · 拖兩端調整長度（最多 15 秒）</span>
     </div>
 
     <div class="tl-outer">
       <div class="tl-wrap" id="tl-wrap">
         <div class="tl-bg"></div>
         <div class="tl-range" id="tl-range"></div>
+        <div id="tl-c">≡</div>
         <div class="tl-handle" id="tl-s"></div>
         <div class="tl-handle" id="tl-e"></div>
       </div>
@@ -310,32 +324,36 @@ const trimVid = $('trim-video');
 const tlWrap  = $('tl-wrap');
 let vDur = 0, sRatio = 0, eRatio = 1;
 let dragging = null;
+let dragStartRatio = 0, dragStartS = 0, dragStartE = 0;
 
 function enterTrim(url) {
   $('file-input').value = '';
   trimVid.src = url;
   trimVid.onloadedmetadata = () => {
-    if (!isFinite(trimVid.duration)) {
-      // MediaRecorder WebM blobs lack duration metadata; seeking to a large
-      // timestamp forces the browser to scan the file and correct it.
+    if (isFinite(trimVid.duration) && trimVid.duration > 0) {
+      initTrim(trimVid.duration);
+    } else {
+      // WebM from camera lacks duration — seek to end to discover it
       trimVid.currentTime = 1e9;
       trimVid.onseeked = () => {
         trimVid.onseeked = null;
+        // duration may still be Infinity on some devices; fall back to currentTime
+        const dur = (isFinite(trimVid.duration) && trimVid.duration > 0)
+          ? trimVid.duration
+          : trimVid.currentTime;
+        initTrim(dur > 0.5 ? dur : MAX_S);
         trimVid.currentTime = 0;
-        vDur   = trimVid.duration;
-        sRatio = 0;
-        eRatio = Math.min(1, MAX_S / vDur);
-        updateTL();
-        showStep('trim');
       };
-    } else {
-      vDur   = trimVid.duration;
-      sRatio = 0;
-      eRatio = Math.min(1, MAX_S / vDur);
-      updateTL();
-      showStep('trim');
     }
   };
+}
+
+function initTrim(dur) {
+  vDur   = dur;
+  sRatio = 0;
+  eRatio = Math.min(1, MAX_S / vDur);
+  updateTL();
+  showStep('trim');
 }
 
 function updateTL() {
@@ -343,10 +361,13 @@ function updateTL() {
   const tw = w - 24; // 12px padding each side
   const sp = 12 + sRatio * tw;
   const ep = 12 + eRatio * tw;
-  $('tl-s').style.left    = sp + 'px';
-  $('tl-e').style.left    = ep + 'px';
+  $('tl-s').style.left      = sp + 'px';
+  $('tl-e').style.left      = ep + 'px';
   $('tl-range').style.left  = sp + 'px';
   $('tl-range').style.width = (ep - sp) + 'px';
+  const cp = (sp + ep) / 2;
+  $('tl-c').style.left    = cp + 'px';
+  $('tl-c').style.display = (ep - sp) > 50 ? 'flex' : 'none';
   const sel = (eRatio - sRatio) * vDur;
   $('lbl-dur').textContent   = sel.toFixed(1);
   $('lbl-start').textContent = fmt(sRatio * vDur);
@@ -366,17 +387,32 @@ function onDrag(cx) {
     if ((eRatio - v) * vDur > MAX_S) v = eRatio - MAX_S / vDur;
     sRatio = Math.max(0, v);
     trimVid.currentTime = sRatio * vDur;
-  } else {
+  } else if (dragging === 'e') {
     let v = Math.max(r, sRatio + 0.3 / vDur);
     if ((v - sRatio) * vDur > MAX_S) v = sRatio + MAX_S / vDur;
     eRatio = Math.min(1, v);
     trimVid.currentTime = eRatio * vDur;
+  } else if (dragging === 'c') {
+    const delta = r - dragStartRatio;
+    const dur = dragStartE - dragStartS;
+    const newS = Math.max(0, Math.min(1 - dur, dragStartS + delta));
+    sRatio = newS;
+    eRatio = newS + dur;
+    trimVid.currentTime = sRatio * vDur;
   }
   updateTL();
 }
 
 $('tl-s').addEventListener('pointerdown', e => { dragging = 's'; e.preventDefault(); $('tl-s').setPointerCapture(e.pointerId); });
 $('tl-e').addEventListener('pointerdown', e => { dragging = 'e'; e.preventDefault(); $('tl-e').setPointerCapture(e.pointerId); });
+$('tl-c').addEventListener('pointerdown', e => {
+  dragging = 'c';
+  dragStartRatio = toRatio(e.clientX);
+  dragStartS = sRatio;
+  dragStartE = eRatio;
+  e.preventDefault();
+  $('tl-c').setPointerCapture(e.pointerId);
+});
 document.addEventListener('pointermove', e => { if (dragging) onDrag(e.clientX); });
 document.addEventListener('pointerup',   () => { dragging = null; });
 
