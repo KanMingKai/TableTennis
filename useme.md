@@ -118,3 +118,50 @@ push 成功後 Cloudflare 自動重新部署，約 1 分鐘生效。
 | Cloudflare | [dash.cloudflare.com](https://dash.cloudflare.com) |
 | Firebase | [console.firebase.google.com](https://console.firebase.google.com) → `tabletennis-community` |
 | Cloudinary | [cloudinary.com](https://cloudinary.com) → Cloud `dndyiurdr` |
+
+---
+
+## Git 版本切換指南
+
+### 情境一：實驗成功，合回穩定版
+
+```bash
+# 在 D:\TableTennis（main）裡執行
+git merge experiment/ui-test
+
+# 打新的存檔標記
+git tag v1.1-stable
+```
+
+### 情境二：實驗失敗，回到舊版
+
+```bash
+# 查看有哪些存檔點
+git tag
+
+# 回到那個版本（唯讀，只能看）
+git checkout v1.0-stable
+
+# 或者，從那個版本重新開一條分支繼續改
+git checkout -b hotfix/something v1.0-stable
+```
+
+### 日常切換（同一個資料夾）
+
+```bash
+git checkout main                # 切到穩定版
+git checkout experiment/ui-test  # 切到實驗版
+```
+
+> 已有 worktree 不需要切換，直接開對應資料夾的瀏覽器分頁：
+> - `D:\TableTennis\`     → 穩定版
+> - `D:\TableTennis-exp\` → 實驗版
+
+### 記憶口訣
+
+| 我想要…        | 指令 |
+|---------------|------|
+| 查有哪些存檔點 | `git tag` |
+| 實驗合回正式   | `git merge experiment/ui-test` |
+| 放棄實驗       | `git worktree remove ../TableTennis-exp` 然後 `git branch -D experiment/ui-test` |
+| 從舊版重新出發 | `git checkout -b 新分支名 v1.0-stable` |

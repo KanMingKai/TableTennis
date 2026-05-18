@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 124 -and $i -le 130\\) { \"${i}: $_\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 73 -and $i -le 78\\) { \"${i}: $_\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 303 -and $i -le 315\\) { \"${i}: $\\($_.Substring\\(0,[Math]::Min\\(100,$_.Length\\)\\)\\)\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 368 -and $i -le 390\\) { \"${i}: $_\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 860 -and $i -le 910\\) { \"${i}: $\\($_.Substring\\(0,[Math]::Min\\(90,$_.Length\\)\\)\\)\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 218 -and $i -le 230\\) { \"${i}: $_\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\"; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 113 -and $i -le 122\\) { \"${i}: $_\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\" -Encoding UTF8; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 74 -and $i -le 115\\) { $_ } } | Out-String)",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\" -Encoding UTF8; $i=0; $lines | ForEach-Object { $i++; if \\($i -ge 887 -and $i -le 925\\) { \"${i}: $\\($_.Substring\\(0,[Math]::Min\\(90,$_.Length\\)\\)\\)\" } })",
+      "PowerShell($lines = Get-Content \"D:\\\\TableTennis\\\\tabletennis-forehand.html\" -Encoding UTF8; $total = $lines.Count; Write-Host \"Total: $total\"; $lines[\\($total-8\\)..\\($total-1\\)] | ForEach-Object { $_ })",
+      "Bash(powershell *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
