@@ -64,20 +64,23 @@
   .nav-tab.active { color: var(--accent); }
   .nav-tab.active svg { stroke: var(--accent); }
 
-  #btn-camera {
+  /* ── Home FAB ── */
+  #home-fab {
+    position: fixed; right: 20px; bottom: calc(var(--nav-h) + 14px);
     width: 52px; height: 52px; border-radius: 50%;
     background: var(--accent); border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 0 0 3px var(--bg), 0 0 20px rgba(255,69,0,.45);
-    position: relative; top: -10px; flex-shrink: 0;
-    transition: transform .15s, box-shadow .2s;
+    z-index: 50;
+    transition: transform .15s, box-shadow .2s, opacity .2s;
     -webkit-tap-highlight-color: transparent;
   }
-  #btn-camera svg {
+  #home-fab.hidden { opacity: 0; pointer-events: none; }
+  #home-fab svg {
     width: 22px; height: 22px; stroke: #fff; fill: none;
     stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
-  #btn-camera:active { transform: scale(0.92) translateY(-4px); box-shadow: 0 0 0 3px var(--bg), 0 4px 24px rgba(255,69,0,.6); }
+  #home-fab:active { transform: scale(0.92); box-shadow: 0 0 0 3px var(--bg), 0 4px 24px rgba(255,69,0,.6); }
 
   /* ── Camera bottom-sheet ── */
   #camera-modal {
@@ -460,6 +463,11 @@
   <button id="mine-modal-close">✕</button>
 </div>
 
+<!-- ── Home FAB ── -->
+<button id="home-fab" title="上傳影片">
+  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+</button>
+
 <!-- ═══════════════════════════════
      Bottom Nav
 ════════════════════════════════ -->
@@ -471,9 +479,6 @@
   <button class="nav-tab" data-tab="teach">
     <svg viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 012-2h12a2 2 0 012 2v12"/><path d="M4 19h16M8 11h8M8 15h5"/></svg>
     <span>教學</span>
-  </button>
-  <button id="btn-camera">
-    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
   </button>
   <button class="nav-tab" data-tab="mine">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -501,7 +506,8 @@ const DEL_PASSWORD = '0000';
 
 // ── Tab navigation ─────────────────────────────────────────
 let currentTab  = 'home';
-const tabs = document.querySelectorAll('.nav-tab[data-tab]');
+const tabs    = document.querySelectorAll('.nav-tab[data-tab]');
+const homeFab = document.getElementById('home-fab');
 
 function switchTab(name) {
   if (name === 'teach') {
@@ -513,6 +519,7 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  homeFab.classList.toggle('hidden', name !== 'home');
   if (name === 'mine') loadMyVideos();
 }
 tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
@@ -525,7 +532,7 @@ if (location.hash === '#mine') {
 
 // ── Camera modal ───────────────────────────────────────────
 const cameraModal = document.getElementById('camera-modal');
-document.getElementById('btn-camera').addEventListener('click', () => cameraModal.classList.add('show'));
+homeFab.addEventListener('click', () => cameraModal.classList.add('show'));
 document.getElementById('modal-backdrop').addEventListener('click', () => cameraModal.classList.remove('show'));
 document.getElementById('modal-cancel').addEventListener('click', () => cameraModal.classList.remove('show'));
 
@@ -723,6 +730,7 @@ function openVideoPlayer(docId, d, likes) {
 
   vpPlayer.classList.add('show');
   document.getElementById('bottom-nav').style.display = 'none';
+  homeFab.style.display = 'none';
 }
 
 function closeVideoPlayer() {
@@ -731,6 +739,7 @@ function closeVideoPlayer() {
   vpOverlay.innerHTML = '';
   vpPlayer.classList.remove('show');
   document.getElementById('bottom-nav').style.display = '';
+  homeFab.style.display = '';
 }
 
 document.getElementById('vp-back').addEventListener('click', closeVideoPlayer);
