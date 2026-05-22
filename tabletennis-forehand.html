@@ -73,37 +73,43 @@
   }
 
   /* ── Bottom Nav ── */
+  :root { --accent: #ff4500; --bg-nav: #0a0a0a; --border-nav: #1e1e1e; --dim-nav: #444; }
   #tt-bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: var(--nav-h);
-    background: #000;
-    border-top: 1px solid rgba(255,255,255,.08);
-    display: grid; grid-template-columns: 1fr 1fr 80px 1fr;
-    align-items: stretch; z-index: 100;
+    background: rgba(10,10,10,.96);
+    border-top: 1px solid var(--border-nav);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 8px; z-index: 100;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    backdrop-filter: blur(10px);
   }
   .tt-nav-tab {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px; background: none; border: none; color: #4b5563;
-    font-size: 10px; font-weight: 500; cursor: pointer; text-decoration: none;
-    -webkit-tap-highlight-color: transparent; transition: color .15s;
-    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    flex: 1; background: none; border: none; color: var(--dim-nav);
+    font-size: 8px; font-weight: 400; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; text-decoration: none;
+    -webkit-tap-highlight-color: transparent; transition: color .2s; padding-top: 2px;
   }
-  /* 上方細線指示條 */
-  .tt-nav-tab.active { color: #00f5ff; }
-  .tt-nav-tab.active::before {
-    content: '';
-    position: absolute; top: 0; left: 25%; right: 25%; height: 2px;
-    background: #00f5ff; border-radius: 0 0 2px 2px;
+  .tt-nav-tab svg {
+    width: 22px; height: 22px; stroke: var(--dim-nav); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke .2s;
   }
-  .tt-nav-tab .tab-icon { font-size: 20px; line-height: 1; }
+  .tt-nav-tab.active { color: var(--accent); }
+  .tt-nav-tab.active svg { stroke: var(--accent); }
   #tt-btn-camera {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent); border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; margin: auto; border-radius: 12px;
-    background: #00f5ff; border: none; cursor: pointer; font-size: 20px;
-    box-shadow: 0 0 0 3px rgba(0,245,255,.12), 0 4px 16px rgba(0,245,255,.3);
-    text-decoration: none;
+    box-shadow: 0 0 0 3px var(--bg-nav), 0 0 20px rgba(255,69,0,.45);
+    position: relative; top: -10px; flex-shrink: 0;
+    text-decoration: none; transition: transform .15s;
     -webkit-tap-highlight-color: transparent;
+  }
+  #tt-btn-camera svg {
+    width: 22px; height: 22px; stroke: #fff; fill: none;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   }
 
   /* ============ FAB 模式切換按鈕 ============ */
@@ -1641,14 +1647,19 @@ init().catch(console.error);
 
 <nav id="tt-bottom-nav">
   <a class="tt-nav-tab" href="index.html">
-    <span class="tab-icon">🏠</span><span>首頁</span>
+    <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    <span>首頁</span>
   </a>
   <span class="tt-nav-tab active">
-    <span class="tab-icon">📚</span><span>教學</span>
+    <svg viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 012-2h12a2 2 0 012 2v12"/><path d="M4 19h16M8 11h8M8 15h5"/></svg>
+    <span>教學</span>
   </span>
-  <a id="tt-btn-camera" href="platform/upload.html?source=file">📷</a>
+  <a id="tt-btn-camera" href="platform/upload.html?source=file">
+    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+  </a>
   <a class="tt-nav-tab" href="index.html#mine">
-    <span class="tab-icon">🎬</span><span>我的</span>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <span>我的</span>
   </a>
 </nav>
 
