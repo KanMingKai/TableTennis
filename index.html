@@ -487,6 +487,12 @@ function switchTab(name) {
 }
 tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
+// ── Hash-based tab (e.g. from forehand page's 我的 link) ───
+if (location.hash === '#mine') {
+  history.replaceState(null, '', location.pathname);
+  switchTab('mine');
+}
+
 // ── Camera modal ───────────────────────────────────────────
 const cameraModal = document.getElementById('camera-modal');
 document.getElementById('btn-camera').addEventListener('click', () => cameraModal.classList.add('show'));

@@ -13,7 +13,8 @@
     --white: #f0ede8; --gray: #888; --gray-dim: #444;
   }
   html, body { background: var(--bg); color: var(--white); font-family: "Noto Sans TC", sans-serif; height: 100%; overflow: hidden; }
-  .layout { display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 56px 1fr; height: 100vh; }
+  :root { --nav-h: 64px; }
+  .layout { display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 56px 1fr; height: calc(100dvh - var(--nav-h)); }
   .topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 24px; padding: 0 28px; border-bottom: 1px solid var(--border); background: var(--bg); }
   .brand { font-family: "Bebas Neue", sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--white); }
   .brand em { color: var(--red); font-style: normal; }
@@ -67,8 +68,36 @@
   .mistake-item:last-child { border-bottom: none; }
   .mistake-icon { color: #ff6b35; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
   @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; grid-template-rows: 52px 55vh 1fr; }
+    .layout { grid-template-columns: 1fr; grid-template-rows: 52px minmax(0, 55dvh) 1fr; }
     .panel { border-left: none; border-top: 1px solid var(--border); }
+  }
+
+  /* ── Bottom Nav ── */
+  #tt-bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: rgba(0,0,0,.92);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: grid; grid-template-columns: 1fr 1fr 80px 1fr;
+    align-items: center; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .tt-nav-tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 0; background: none; border: none; color: #374151;
+    font-size: 10px; font-weight: 500; cursor: pointer; text-decoration: none;
+    -webkit-tap-highlight-color: transparent; transition: color .15s;
+  }
+  .tt-nav-tab.active { color: #00f5ff; }
+  .tt-nav-tab .tab-icon { font-size: 22px; line-height: 1; }
+  #tt-btn-camera {
+    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px; margin: 0 auto; border-radius: 14px;
+    background: #00f5ff; border: none; cursor: pointer; font-size: 22px;
+    box-shadow: 0 0 0 4px rgba(0,245,255,.15), 0 6px 20px rgba(0,245,255,.35);
+    position: relative; bottom: 10px; text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ============ FAB 模式切換按鈕 ============ */
@@ -162,8 +191,6 @@
 <body>
 <div class="layout">
   <header class="topbar">
-    <a href="index.html" style="font-size:12px;color:#94a3b8;text-decoration:none;letter-spacing:1px;white-space:nowrap;flex-shrink:0;">← 首頁</a>
-    <div class="divider"></div>
     <div class="brand">TABLE<em>·</em>TENNIS</div>
     <div class="divider"></div>
     <div class="topbar-subtitle">動作解析</div>
@@ -1605,6 +1632,19 @@ init().catch(console.error);
   });
 })();
 </script>
+
+<nav id="tt-bottom-nav">
+  <a class="tt-nav-tab" href="index.html">
+    <span class="tab-icon">🏠</span><span>首頁</span>
+  </a>
+  <span class="tt-nav-tab active">
+    <span class="tab-icon">📚</span><span>教學</span>
+  </span>
+  <a id="tt-btn-camera" href="platform/upload.html?source=file">📷</a>
+  <a class="tt-nav-tab" href="index.html#mine">
+    <span class="tab-icon">🎬</span><span>我的</span>
+  </a>
+</nav>
 
 </body>
 </html>
