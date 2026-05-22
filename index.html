@@ -307,12 +307,6 @@
   .vp-dm-send:active { background: rgba(0,245,255,.35); }
 
   /* ════════════════════════════════════
-     TEACH TAB
-  ════════════════════════════════════ */
-  #page-teach { background: #0a0a0f; }
-  #teach-iframe { width: 100%; height: 100%; border: none; display: block; }
-
-  /* ════════════════════════════════════
      MINE TAB
   ════════════════════════════════════ */
   #page-mine { background: #0a0a0f; overflow-y: auto; }
@@ -371,12 +365,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════
-     TEACH: iframe
-════════════════════════════════ -->
-<div class="page" id="page-teach">
-  <iframe id="teach-iframe" src="" allow="camera; microphone; fullscreen"></iframe>
-</div>
+<!-- TEACH tab navigates directly, no iframe needed -->
 
 <!-- ═══════════════════════════════
      MINE: personal videos
@@ -482,20 +471,18 @@ const DEL_PASSWORD = '0000';
 
 // ── Tab navigation ─────────────────────────────────────────
 let currentTab  = 'home';
-let teachLoaded = false;
 const tabs = document.querySelectorAll('.nav-tab[data-tab]');
 
 function switchTab(name) {
+  if (name === 'teach') {
+    window.location.href = 'tabletennis-forehand.html';
+    return;
+  }
   if (currentTab === name) return;
   currentTab = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-
-  if (name === 'teach' && !teachLoaded) {
-    document.getElementById('teach-iframe').src = 'tabletennis-forehand.html';
-    teachLoaded = true;
-  }
   if (name === 'mine') loadMyVideos();
 }
 tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
