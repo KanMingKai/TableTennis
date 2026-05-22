@@ -34,32 +34,36 @@
   #bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: var(--nav-h);
-    background: rgba(0,0,0,.92);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255,255,255,.06);
+    background: #000;
+    border-top: 1px solid rgba(255,255,255,.08);
     display: grid; grid-template-columns: 1fr 1fr 80px 1fr;
-    align-items: center; z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    align-items: stretch; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .nav-tab {
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 8px 0; background: none; border: none; color: #374151;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; background: none; border: none; color: #4b5563;
     font-size: 10px; font-weight: 500; cursor: pointer; transition: color .15s;
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent; position: relative;
   }
+  /* 上方細線指示條 */
   .nav-tab.active { color: var(--cyan); }
-  .nav-tab .tab-icon { font-size: 22px; line-height: 1; }
+  .nav-tab.active::before {
+    content: '';
+    position: absolute; top: 0; left: 25%; right: 25%; height: 2px;
+    background: var(--cyan); border-radius: 0 0 2px 2px;
+  }
+  .nav-tab .tab-icon { font-size: 20px; line-height: 1; }
 
   #btn-camera {
     display: flex; align-items: center; justify-content: center;
-    width: 52px; height: 52px; margin: 0 auto; border-radius: 14px;
-    background: var(--cyan); border: none; cursor: pointer; font-size: 22px;
-    box-shadow: 0 0 0 4px rgba(0,245,255,.15), 0 6px 20px rgba(0,245,255,.35);
+    width: 44px; height: 44px; margin: auto; border-radius: 12px;
+    background: var(--cyan); border: none; cursor: pointer; font-size: 20px;
+    box-shadow: 0 0 0 3px rgba(0,245,255,.12), 0 4px 16px rgba(0,245,255,.3);
     transition: transform .12s, box-shadow .12s;
     -webkit-tap-highlight-color: transparent;
-    position: relative; bottom: 10px;
   }
-  #btn-camera:active { transform: scale(0.91); box-shadow: 0 0 0 2px rgba(0,245,255,.1), 0 3px 8px rgba(0,245,255,.2); }
+  #btn-camera:active { transform: scale(0.91); box-shadow: 0 0 0 2px rgba(0,245,255,.08), 0 2px 8px rgba(0,245,255,.2); }
 
   /* ── Camera bottom-sheet ── */
   #camera-modal {
