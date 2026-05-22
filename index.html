@@ -3,77 +3,703 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0a0f">
-<title>練習室</title>
+<meta name="theme-color" content="#000000">
+<title>桌球練習室</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a0a0f; color: #e2e8f0; font-family: "Noto Sans TC", system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  :root { --nav-h: 64px; --cyan: #00f5ff; }
 
-  header { display: flex; align-items: center; padding: 0 16px; height: 50px; border-bottom: 1px solid rgba(0,245,255,.12); background: rgba(0,0,0,.75); backdrop-filter: blur(8px); }
-  .nav-logo { font-size: 15px; font-weight: 700; color: #00f5ff; letter-spacing: .04em; }
+  body {
+    background: #000; color: #e2e8f0;
+    font-family: "Noto Sans TC", system-ui, sans-serif;
+    overflow: hidden; height: 100vh; height: 100dvh;
+  }
 
-  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; gap: 20px; }
+  /* ── Pages ── */
+  .page {
+    position: fixed; top: 0; left: 0; right: 0;
+    bottom: var(--nav-h);
+    display: none; overflow: hidden;
+  }
+  .page.active { display: block; }
 
-  .hero { text-align: center; margin-bottom: 8px; }
-  .hero h1 { font-size: 26px; font-weight: 800; letter-spacing: .04em; }
-  .hero p  { font-size: 14px; color: #64748b; margin-top: 6px; }
-
-  .cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 380px; }
-
-  .entry-card {
-    display: flex; align-items: center; gap: 18px;
-    background: #111827;
-    border: 1px solid rgba(0,245,255,.12);
-    border-radius: 16px;
-    padding: 22px 20px;
-    text-decoration: none; color: inherit;
-    cursor: pointer;
-    transition: transform .15s, border-color .15s, background .15s;
+  /* ── Bottom Nav ── */
+  #bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: rgba(10,10,15,.94);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255,255,255,.07);
+    display: grid; grid-template-columns: 1fr 1fr 80px 1fr;
+    align-items: center; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 8px 0; background: none; border: none; color: #4b5563;
+    font-size: 10px; cursor: pointer; transition: color .15s;
     -webkit-tap-highlight-color: transparent;
   }
-  .entry-card:active { transform: scale(0.97); }
-  @media (hover: hover) {
-    .entry-card:hover { transform: translateY(-3px); border-color: rgba(0,245,255,.4); background: #151f30; }
-  }
-  .entry-card.accent { border-color: rgba(0,245,255,.3); }
+  .nav-tab.active { color: var(--cyan); }
+  .nav-tab .tab-icon { font-size: 22px; line-height: 1; }
 
-  .card-icon { font-size: 38px; flex-shrink: 0; }
-  .card-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-  .card-text p  { font-size: 13px; color: #64748b; line-height: 1.5; }
-  .card-arrow { margin-left: auto; color: #475569; flex-shrink: 0; }
-  .card-arrow svg { width: 20px; height: 20px; }
+  #btn-camera {
+    display: flex; align-items: center; justify-content: center;
+    width: 54px; height: 54px; margin: 0 auto;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #00f5ff 0%, #0ea5e9 100%);
+    border: none; cursor: pointer; font-size: 24px;
+    box-shadow: 0 4px 18px rgba(0,245,255,.4);
+    transition: transform .12s, box-shadow .12s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative; bottom: 10px;
+  }
+  #btn-camera:active { transform: scale(0.91); box-shadow: 0 2px 8px rgba(0,245,255,.2); }
+
+  /* ── Camera bottom-sheet modal ── */
+  #camera-modal {
+    position: fixed; inset: 0; z-index: 200;
+    display: none; align-items: flex-end;
+  }
+  #camera-modal.show { display: flex; }
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+  }
+  .modal-sheet {
+    position: relative; z-index: 1; width: 100%;
+    background: #111827; border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .modal-handle {
+    width: 40px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,.18); margin: 0 auto 10px;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+  .modal-btn {
+    display: flex; align-items: center; gap: 16px;
+    padding: 18px 16px; border-radius: 12px;
+    border: 1px solid rgba(0,245,255,.14); background: #1a2535;
+    color: #e2e8f0; font-size: 15px; font-weight: 600;
+    cursor: pointer; text-align: left; text-decoration: none;
+    transition: all .15s; -webkit-tap-highlight-color: transparent;
+  }
+  .modal-btn:active { transform: scale(0.98); background: #1e2d40; }
+  .modal-btn .mb-icon { font-size: 28px; flex-shrink: 0; }
+  .modal-btn .mb-desc { font-size: 12px; color: #64748b; font-weight: 400; margin-top: 2px; }
+  .modal-cancel {
+    padding: 14px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.1); background: transparent;
+    color: #94a3b8; font-size: 14px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .modal-cancel:active { background: rgba(255,255,255,.06); }
+
+  /* ── HOME: Reels ── */
+  #page-home { background: #000; }
+  .reels {
+    position: absolute; inset: 0;
+    overflow-y: scroll; overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .reels::-webkit-scrollbar { display: none; }
+
+  .reel-item {
+    position: relative; width: 100%; height: 100%;
+    scroll-snap-align: start; scroll-snap-stop: always;
+    overflow: hidden; background: #000; cursor: pointer;
+  }
+  .reel-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: contain;
+  }
+  .reel-gradient {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,.55) 0%, transparent 18%),
+      linear-gradient(to top,    rgba(0,0,0,.85) 0%, transparent 55%);
+  }
+  .dm-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 110px;
+    pointer-events: none; overflow: hidden;
+  }
+  .dm-item {
+    position: absolute; left: 100%;
+    white-space: nowrap; font-size: 18px; font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.7);
+    line-height: 1.2; pointer-events: none;
+  }
+  .reel-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 16px 16px 110px;
+    display: flex; align-items: flex-end; gap: 14px;
+  }
+  .reel-info { flex: 1; min-width: 0; }
+  .reel-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 5px;
+    text-shadow: 0 1px 5px rgba(0,0,0,.9);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .reel-meta { font-size: 12px; color: rgba(255,255,255,.6); text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+  .reel-actions { display: flex; flex-direction: column; gap: 12px; align-items: center; flex-shrink: 0; }
+  .action-btn {
+    width: 46px; height: 46px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.55);
+    color: #fff; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: background .12s, transform .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn:active { background: rgba(255,255,255,.2); transform: scale(0.92); }
+  .like-btn { flex-direction: column; gap: 2px; }
+  .like-btn.liked { background: rgba(239,68,68,.5); }
+  .like-count { font-size: 11px; line-height: 1; }
+  .dm-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 12px 16px;
+    background: linear-gradient(to top, rgba(0,0,0,.65) 0%, transparent 100%);
+  }
+  .dm-input {
+    flex: 1; padding: 9px 14px; border-radius: 22px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(0,0,0,.45); color: #fff; font-size: 14px; outline: none;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dm-input::placeholder { color: rgba(255,255,255,.38); }
+  .dm-input:focus { border-color: rgba(0,245,255,.5); }
+  .dm-send {
+    padding: 9px 16px; border-radius: 22px;
+    border: 1px solid rgba(0,245,255,.45);
+    background: rgba(0,245,255,.15); color: #00f5ff;
+    font-size: 13px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dm-send:active { background: rgba(0,245,255,.35); }
+  .tap-hint {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; pointer-events: none;
+    opacity: 0; transition: opacity .15s;
+  }
+  .tap-hint.show { opacity: 1; }
+  .reel-loading, .reel-empty {
+    height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; color: #475569; font-size: 14px; text-align: center; padding: 32px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid rgba(0,245,255,.15); border-top-color: #00f5ff;
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TEACH: iframe ── */
+  #page-teach { background: #0a0a0f; }
+  #teach-iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* ── MINE: My Videos ── */
+  #page-mine { background: #0a0a0f; overflow-y: auto; }
+  .mine-header {
+    padding: 20px 16px 14px;
+    font-size: 18px; font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mine-refresh {
+    font-size: 12px; color: #64748b; background: none; border: none;
+    padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mine-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px;
+  }
+  .mine-thumb {
+    position: relative; aspect-ratio: 9/16;
+    background: #111827; overflow: hidden; cursor: pointer;
+  }
+  .mine-thumb video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+  .mine-thumb-del {
+    position: absolute; top: 4px; right: 4px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(0,0,0,.7); border: none; color: #fff; font-size: 11px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mine-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 80px 32px; color: #475569; font-size: 14px; text-align: center;
+  }
+  .mine-empty .e-icon { font-size: 52px; }
+
+  /* Mine fullscreen player */
+  #mine-modal {
+    position: fixed; inset: 0; z-index: 300;
+    background: #000; display: none;
+    align-items: center; justify-content: center;
+  }
+  #mine-modal.show { display: flex; }
+  #mine-modal-video { max-width: 100%; max-height: 100dvh; object-fit: contain; }
+  #mine-modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.15); border: none;
+    color: #fff; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
 </style>
 </head>
 <body>
-<header>
-  <span class="nav-logo">🏓 練習揮拍</span>
-</header>
 
-<main>
-  <div class="hero">
-    <h1>專屬你的桌球教練</h1>
-    <p>智慧 AI 動作分析 x 球友交流圈</p>
+<!-- ── Page: Home (Reels) ── -->
+<div class="page active" id="page-home">
+  <div class="reels" id="reels">
+    <div class="reel-loading" id="reel-loading">
+      <div class="spinner"></div>
+      <div>載入中…</div>
+    </div>
   </div>
+</div>
 
-  <div class="cards">
-    <a class="entry-card accent" href="tabletennis-forehand.html">
-      <div class="card-icon">🎯</div>
-      <div class="card-text">
-        <h2>立即開練</h2>
-        <p>透過 AI 即時分析，精準掌握你的動作細節。</p>
-      </div>
-      <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-    </a>
+<!-- ── Page: Teaching ── -->
+<div class="page" id="page-teach">
+  <iframe id="teach-iframe" src="" allow="camera; microphone; fullscreen"></iframe>
+</div>
 
-    <a class="entry-card" href="platform/index.html">
-      <div class="card-icon">🎬</div>
-      <div class="card-text">
-        <h2>觀摩與交流</h2>
-        <p>看看大家的揮拍動作，隨時留言互動、互相交流。</p>
-      </div>
-      <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-    </a>
+<!-- ── Page: My Videos ── -->
+<div class="page" id="page-mine">
+  <div class="mine-header">
+    <span>🎬 我的影片</span>
+    <button class="mine-refresh" id="mine-refresh-btn">重新整理</button>
   </div>
-</main>
+  <div id="mine-content">
+    <div class="mine-empty"><div class="e-icon">🎬</div><div>點下方 📷 開始錄製你的第一支影片吧！</div></div>
+  </div>
+</div>
+
+<!-- ── Camera bottom-sheet ── -->
+<div id="camera-modal">
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增影片</div>
+    <a class="modal-btn" href="platform/upload.html?source=file" id="modal-file-btn">
+      <span class="mb-icon">🎞️</span>
+      <div>
+        <div>從相簿選擇</div>
+        <div class="mb-desc">選取已拍好的影片進行剪輯上傳</div>
+      </div>
+    </a>
+    <a class="modal-btn" href="platform/upload.html?source=cam" id="modal-cam-btn">
+      <span class="mb-icon">📷</span>
+      <div>
+        <div>即時拍攝</div>
+        <div class="mb-desc">用手機鏡頭即時錄製揮拍動作</div>
+      </div>
+    </a>
+    <button class="modal-cancel" id="modal-cancel">取消</button>
+  </div>
+</div>
+
+<!-- ── Mine fullscreen player ── -->
+<div id="mine-modal">
+  <video id="mine-modal-video" controls playsinline></video>
+  <button id="mine-modal-close">✕</button>
+</div>
+
+<!-- ── Bottom Nav ── -->
+<nav id="bottom-nav">
+  <button class="nav-tab active" data-tab="home">
+    <span class="tab-icon">🏠</span>
+    <span>首頁</span>
+  </button>
+  <button class="nav-tab" data-tab="teach">
+    <span class="tab-icon">📚</span>
+    <span>教學</span>
+  </button>
+  <button id="btn-camera">📷</button>
+  <button class="nav-tab" data-tab="mine">
+    <span class="tab-icon">🎬</span>
+    <span>我的</span>
+  </button>
+</nav>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="platform/firebase-config.js"></script>
+<script>
+// ── Device ID ─────────────────────────────────────────────
+function getDeviceId() {
+  let id = localStorage.getItem('tt_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    localStorage.setItem('tt_device_id', id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
+
+// ── Tab navigation ────────────────────────────────────────
+const pages = {
+  home:  document.getElementById('page-home'),
+  teach: document.getElementById('page-teach'),
+  mine:  document.getElementById('page-mine'),
+};
+const tabs = document.querySelectorAll('.nav-tab[data-tab]');
+let currentTab  = 'home';
+let teachLoaded = false;
+
+function switchTab(name) {
+  if (currentTab === name) return;
+  if (currentTab === 'home') {
+    document.querySelectorAll('.reel-video').forEach(v => v.pause());
+  }
+  currentTab = name;
+  Object.entries(pages).forEach(([k, el]) => el.classList.toggle('active', k === name));
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+
+  if (name === 'teach' && !teachLoaded) {
+    document.getElementById('teach-iframe').src = 'tabletennis-forehand.html';
+    teachLoaded = true;
+  }
+  if (name === 'mine') loadMyVideos();
+  if (name === 'home') {
+    document.querySelectorAll('.reel-item').forEach(item => {
+      const rect = item.getBoundingClientRect();
+      if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+        const v = item.querySelector('.reel-video');
+        if (v) v.play().catch(() => {});
+      }
+    });
+  }
+}
+tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+// ── Camera Modal ──────────────────────────────────────────
+const cameraModal = document.getElementById('camera-modal');
+document.getElementById('btn-camera').addEventListener('click', () => cameraModal.classList.add('show'));
+document.getElementById('modal-backdrop').addEventListener('click', () => cameraModal.classList.remove('show'));
+document.getElementById('modal-cancel').addEventListener('click', () => cameraModal.classList.remove('show'));
+
+// ── Danmaku engine ────────────────────────────────────────
+const LANES   = 10;
+const laneEnd = new Array(LANES).fill(0);
+const dmCache = new Map();
+const dmShown = new Map();
+
+function getFreeLane() {
+  const now = performance.now();
+  let i = laneEnd.findIndex(t => t <= now);
+  if (i === -1) i = Math.floor(Math.random() * LANES);
+  return i;
+}
+
+function flyText(overlay, text, color) {
+  const span = document.createElement('span');
+  span.className = 'dm-item';
+  span.textContent = text;
+  span.style.color = color || '#fff';
+  overlay.appendChild(span);
+  const lane  = getFreeLane();
+  const laneH = overlay.offsetHeight / LANES;
+  span.style.top = (lane * laneH + (laneH - 22) / 2) + 'px';
+  const W   = overlay.offsetWidth;
+  const dur = 7000 + Math.random() * 2000;
+  laneEnd[lane] = performance.now() + dur;
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = (now - t0) / dur;
+    if (p >= 1) { span.remove(); return; }
+    span.style.transform = 'translateX(' + (-(W + span.offsetWidth) * p) + 'px)';
+    requestAnimationFrame(tick);
+  })(performance.now());
+}
+
+async function loadDanmaku(videoId) {
+  if (dmCache.has(videoId)) return dmCache.get(videoId);
+  try {
+    const snap = await db.collection('danmaku').doc(videoId)
+      .collection('comments').orderBy('time').get();
+    const list = snap.docs.map(d => d.data());
+    dmCache.set(videoId, list);
+    return list;
+  } catch(_) { dmCache.set(videoId, []); return []; }
+}
+
+// ── Load Reels ────────────────────────────────────────────
+const DEL_PASSWORD = '0000';
+let muteState = true;
+
+(async () => {
+  const reelsEl = document.getElementById('reels');
+  try {
+    const snap = await db.collection('videos')
+      .orderBy('uploadedAt', 'desc').limit(60).get();
+    document.getElementById('reel-loading').remove();
+    if (snap.empty) {
+      reelsEl.innerHTML = '<div class="reel-empty">還沒有影片<br>快去上傳第一支揮拍吧！</div>';
+      return;
+    }
+    snap.forEach(doc => reelsEl.appendChild(makeReel(doc)));
+    setupObserver();
+  } catch(e) {
+    document.getElementById('reel-loading').innerHTML =
+      '<div style="color:#f87171;">載入失敗：' + e.message + '</div>';
+  }
+})();
+
+function makeReel(doc) {
+  const d     = doc.data();
+  const docId = doc.id;
+  const date  = d.uploadedAt ? new Date(d.uploadedAt.toDate()).toLocaleDateString('zh-TW') : '—';
+
+  const item = document.createElement('div');
+  item.className = 'reel-item';
+
+  const vid = document.createElement('video');
+  vid.className = 'reel-video';
+  vid.src = d.url.replace('/upload/', '/upload/f_auto/');
+  vid.muted = true; vid.loop = true; vid.preload = 'metadata';
+  vid.setAttribute('playsinline', '');
+
+  const grad = document.createElement('div');
+  grad.className = 'reel-gradient';
+
+  const dmOv = document.createElement('div');
+  dmOv.className = 'dm-overlay';
+
+  const hint = document.createElement('div');
+  hint.className = 'tap-hint'; hint.textContent = '⏸';
+
+  const bottom = document.createElement('div');
+  bottom.className = 'reel-bottom';
+
+  const info = document.createElement('div');
+  info.className = 'reel-info';
+  info.innerHTML =
+    '<div class="reel-title">' + escHtml(d.title || '揮拍練習') + '</div>' +
+    '<div class="reel-meta">' + date + '</div>';
+
+  const actions = document.createElement('div');
+  actions.className = 'reel-actions';
+
+  const storageKey = 'liked_' + docId;
+  let likeCount = d.likes || 0;
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'action-btn like-btn' + (localStorage.getItem(storageKey) ? ' liked' : '');
+  likeBtn.innerHTML =
+    '<span class="like-icon">' + (localStorage.getItem(storageKey) ? '❤️' : '🤍') + '</span>' +
+    '<span class="like-count">' + likeCount + '</span>';
+
+  async function toggleLike() {
+    const wasLiked = !!localStorage.getItem(storageKey);
+    if (wasLiked) {
+      localStorage.removeItem(storageKey); likeCount = Math.max(0, likeCount - 1);
+      likeBtn.classList.remove('liked'); likeBtn.querySelector('.like-icon').textContent = '🤍';
+    } else {
+      localStorage.setItem(storageKey, '1'); likeCount++;
+      likeBtn.classList.add('liked'); likeBtn.querySelector('.like-icon').textContent = '❤️';
+    }
+    likeBtn.querySelector('.like-count').textContent = likeCount;
+    try {
+      await db.collection('videos').doc(docId).update({
+        likes: firebase.firestore.FieldValue.increment(wasLiked ? -1 : 1)
+      });
+    } catch(_) {}
+  }
+  likeBtn.addEventListener('click', e => { e.stopPropagation(); toggleLike(); });
+
+  const muteBtn = document.createElement('button');
+  muteBtn.className = 'action-btn mute-btn'; muteBtn.textContent = '🔇';
+  muteBtn.addEventListener('click', e => {
+    e.stopPropagation(); muteState = !muteState; vid.muted = muteState; syncMuteBtns();
+  });
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'action-btn'; delBtn.textContent = '🗑';
+  delBtn.addEventListener('click', async e => {
+    e.stopPropagation();
+    const pwd = prompt('請輸入刪除密碼：');
+    if (pwd === null) return;
+    if (pwd !== DEL_PASSWORD) { alert('密碼錯誤'); return; }
+    if (!confirm('確定刪除？（無法復原）')) return;
+    try {
+      await db.collection('videos').doc(docId).delete();
+      item.remove();
+      if (!document.querySelector('.reel-item')) {
+        document.getElementById('reels').innerHTML =
+          '<div class="reel-empty">還沒有影片<br>快去上傳第一支揮拍吧！</div>';
+      }
+    } catch(err) { alert('刪除失敗：' + err.message); }
+  });
+
+  actions.append(likeBtn, muteBtn, delBtn);
+  bottom.append(info, actions);
+
+  const dmBar   = document.createElement('div'); dmBar.className = 'dm-bar';
+  const dmInput = document.createElement('input');
+  dmInput.className = 'dm-input'; dmInput.type = 'text';
+  dmInput.placeholder = '發送彈幕…'; dmInput.maxLength = 50;
+  const dmSend = document.createElement('button');
+  dmSend.className = 'dm-send'; dmSend.textContent = '發送';
+  dmBar.append(dmInput, dmSend);
+
+  let tapTimer = null, tapCount = 0;
+  item.addEventListener('click', e => {
+    if (e.target.closest('.action-btn, .dm-bar')) return;
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => {
+      if (tapCount >= 2) { toggleLike(); }
+      else {
+        if (vid.paused) { vid.play(); hint.textContent = '▶'; }
+        else            { vid.pause(); hint.textContent = '⏸'; }
+        hint.classList.add('show');
+        setTimeout(() => hint.classList.remove('show'), 700);
+      }
+      tapCount = 0;
+    }, 280);
+  });
+
+  item.append(vid, grad, dmOv, hint, bottom, dmBar);
+
+  async function sendDm() {
+    const text = dmInput.value.trim();
+    if (!text) return;
+    const time = vid.currentTime; const color = '#ffffff';
+    try {
+      await db.collection('danmaku').doc(docId).collection('comments').add({
+        text, color, time, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      dmInput.value = ''; flyText(dmOv, text, color);
+      const list = dmCache.get(docId) || [];
+      list.push({ text, color, time }); list.sort((a, b) => a.time - b.time);
+      dmCache.set(docId, list);
+    } catch(_) {}
+  }
+  dmSend.addEventListener('click',   e => { e.stopPropagation(); sendDm(); });
+  dmInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); sendDm(); } });
+  dmInput.addEventListener('click',   e => e.stopPropagation());
+
+  dmShown.set(docId, new Set());
+  vid.addEventListener('timeupdate', () => {
+    const list = dmCache.get(docId); if (!list) return;
+    const shown = dmShown.get(docId); const t = vid.currentTime;
+    list.forEach((dm, i) => {
+      if (!shown.has(i) && dm.time <= t && t - dm.time < 0.5) { shown.add(i); flyText(dmOv, dm.text, dm.color); }
+    });
+  });
+  vid.addEventListener('seeked', () => dmShown.set(docId, new Set()));
+  item._loadDm = () => loadDanmaku(docId);
+  return item;
+}
+
+function setupObserver() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const vid = entry.target.querySelector('.reel-video');
+      if (!vid) return;
+      if (entry.intersectionRatio >= 0.75) {
+        if (currentTab !== 'home') return;
+        vid.muted = muteState;
+        vid.play().catch(() => { vid.muted = true; muteState = true; syncMuteBtns(); vid.play().catch(() => {}); });
+        if (entry.target._loadDm) { entry.target._loadDm(); entry.target._loadDm = null; }
+      } else if (entry.intersectionRatio < 0.25) {
+        vid.pause(); vid.currentTime = 0;
+      }
+    });
+  }, { threshold: [0.25, 0.75] });
+  document.querySelectorAll('.reel-item').forEach(item => obs.observe(item));
+}
+
+function syncMuteBtns() {
+  document.querySelectorAll('.mute-btn').forEach(b => b.textContent = muteState ? '🔇' : '🔊');
+  document.querySelectorAll('.reel-video').forEach(v => { if (!v.paused) v.muted = muteState; });
+}
+
+// ── My Videos ─────────────────────────────────────────────
+async function loadMyVideos() {
+  const content = document.getElementById('mine-content');
+  content.innerHTML = '<div class="mine-empty"><div class="spinner"></div><div>載入中…</div></div>';
+  try {
+    const snap = await db.collection('videos')
+      .where('deviceId', '==', DEVICE_ID).get();
+    const docs = snap.docs.sort((a, b) => {
+      const ta = a.data().uploadedAt?.toDate?.() || 0;
+      const tb = b.data().uploadedAt?.toDate?.() || 0;
+      return tb - ta;
+    });
+    if (docs.length === 0) {
+      content.innerHTML =
+        '<div class="mine-empty"><div class="e-icon">🎬</div>' +
+        '<div>還沒有影片<br>點下方 📷 開始錄製吧！</div></div>';
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'mine-grid';
+    docs.forEach(doc => grid.appendChild(makeMineThumb(doc)));
+    content.innerHTML = '';
+    content.appendChild(grid);
+  } catch(e) {
+    content.innerHTML = '<div class="mine-empty" style="color:#f87171;">載入失敗：' + escHtml(e.message) + '</div>';
+  }
+}
+
+function makeMineThumb(doc) {
+  const d = doc.data();
+  const wrap = document.createElement('div');
+  wrap.className = 'mine-thumb';
+
+  const vid = document.createElement('video');
+  vid.src = d.url.replace('/upload/', '/upload/f_auto/');
+  vid.preload = 'metadata'; vid.muted = true;
+  vid.setAttribute('playsinline', '');
+  wrap.appendChild(vid);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'mine-thumb-del'; delBtn.textContent = '✕';
+  delBtn.addEventListener('click', async e => {
+    e.stopPropagation();
+    if (!confirm('刪除這支影片？')) return;
+    try {
+      await db.collection('videos').doc(doc.id).delete();
+      wrap.remove();
+      const grid = document.querySelector('.mine-grid');
+      if (grid && !grid.querySelector('.mine-thumb')) {
+        document.getElementById('mine-content').innerHTML =
+          '<div class="mine-empty"><div class="e-icon">🎬</div>' +
+          '<div>還沒有影片<br>點下方 📷 開始錄製吧！</div></div>';
+      }
+    } catch(err) { alert('刪除失敗：' + err.message); }
+  });
+  wrap.appendChild(delBtn);
+
+  wrap.addEventListener('click', () => {
+    document.getElementById('mine-modal-video').src = d.url.replace('/upload/', '/upload/f_auto/');
+    document.getElementById('mine-modal').classList.add('show');
+  });
+  return wrap;
+}
+
+document.getElementById('mine-modal-close').addEventListener('click', () => {
+  document.getElementById('mine-modal').classList.remove('show');
+  const mv = document.getElementById('mine-modal-video');
+  mv.pause(); mv.src = '';
+});
+document.getElementById('mine-refresh-btn').addEventListener('click', loadMyVideos);
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 </body>
 </html>

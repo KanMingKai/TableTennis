@@ -216,7 +216,7 @@
       <div class="s-big">🎉</div>
       <h3>上傳成功！</h3>
       <p>你的揮拍影片已發布到社群</p>
-      <a href="index.html" class="btn-primary" style="display:block;text-decoration:none;text-align:center;">前往社群觀看</a>
+      <a href="../index.html" class="btn-primary" style="display:block;text-decoration:none;text-align:center;">前往社群觀看</a>
     </div>
   </div>
 
@@ -235,6 +235,16 @@
 const CLOUD  = 'dndyiurdr';
 const PRESET = 'tabletennis_upload';
 const MAX_S  = 15;
+
+function getDeviceId() {
+  let id = localStorage.getItem('tt_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    localStorage.setItem('tt_device_id', id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
 
 // ── DOM ──────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -551,6 +561,7 @@ $('btn-upload').addEventListener('click', async () => {
       await db.collection('videos').add({
         title, url: res.secure_url, ext,
         size: trimmedBlob.size,
+        deviceId: DEVICE_ID,
         uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       showStep('success');
@@ -567,6 +578,11 @@ $('btn-upload').addEventListener('click', async () => {
 function fmt(s) {
   return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0');
 }
+
+// Auto-trigger source from query param (called from camera modal in index.html)
+const _src = new URLSearchParams(location.search).get('source');
+if (_src === 'cam')  { $('btn-open-cam').click(); }
+else if (_src === 'file') { $('btn-open-file').click(); }
 </script>
 </body>
 </html>
